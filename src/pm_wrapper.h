@@ -65,11 +65,11 @@ typedef struct PmBackend
     void *(*read_object)(pm_offset offset);
     /**
      * @brief Writes data to a pm region
-     * @param offset pm offset
+     * @param offset vm pointer
      * @param data vm pointer
      * @param size size of data to write
      */
-    void (*write_object)(pm_offset offset, char *data, size_t size);
+    void (*write_object)(void* dst, char *data, size_t size);
 } PmBackend;
 
 /**

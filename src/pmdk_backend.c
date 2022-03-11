@@ -68,9 +68,9 @@ static void *read_object(pm_offset offset)
     return pmemobj_direct_inline(get_oid_by_offset(offset));
 }
 
-static void write_object(pm_offset offset, char *data, size_t len)
+static void write_object(void *dst, char *data, size_t len)
 {
-    pmemobj_memcpy_persist(pop, (void *)offset, data, len);
+    pmemobj_memcpy_persist(pop, dst, data, len);
 }
 
 const PmBackend PMDK_BACKEND = {

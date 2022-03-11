@@ -34,7 +34,7 @@ void *pm_read_object(void *ptr)
 
 void pm_write_object(void *ptr, char *data, int len)
 {
-    backend.write_object((pm_offset)ptr, data, len);
+    backend.write_object(ptr, data, len);
 };
 
 int pm_close()
