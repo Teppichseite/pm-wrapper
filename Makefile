@@ -1,16 +1,12 @@
 CC = clang
 CFLAGS = -Wall -Werror -g -lpmemobj -lpmem -pthread -lm -pthread
-PM_WRAPPER_FILES = ./src/pm_wrapper.c ./src/pmdk_backend.c
+PM_WRAPPER_FILES = ./src/pm_wrapper.c ./src/pmdk_backend.c ./src/region_id_map.c ./src/context_map.c ./src/hashmap/hashmap.c
 
-all: ./bin/btree_wrapper ./bin/btree_direct
+all: ./bin/multiple_region
 
-./bin/btree_wrapper: ./src/examples/btree_wrapper.c $(PM_WRAPPER_FILES)
+./bin/multiple_region: ./src/examples/multiple_region/multiple_region.c $(PM_WRAPPER_FILES)
 	mkdir ./bin -p
-	$(CC) ./src/examples/btree_wrapper.c $(PM_WRAPPER_FILES) $(CFLAGS) -o ./bin/btree_wrapper
-
-./bin/btree_direct: ./src/examples/btree_direct.c $(PM_WRAPPER_FILES)
-	mkdir ./bin -p
-	$(CC) ./src/examples/btree_direct.c $(PM_WRAPPER_FILES) $(CFLAGS) -o ./bin/btree_direct
+	$(CC) ./src/examples/multiple_region/multiple_region.c $(PM_WRAPPER_FILES) $(CFLAGS) -o ./bin/multiple_region
 
 clean:
 	rm ./bin/*

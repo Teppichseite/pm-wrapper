@@ -4,76 +4,72 @@
 #include <libpmemobj.h>
 #include <stdlib.h>
 
-static PMEMobjpool *pop;
-static PMEMoid root_oid;
+#define POOL(context) ((PMEMobjpool *)context->data)
 
-static PMEMoid get_oid_by_offset(pm_offset offset)
+static int open(PmBackendContext *context)
 {
-    PMEMoid oid = {
-        .pool_uuid_lo = root_oid.pool_uuid_lo,
-        .off = offset};
-
-    return oid;
-}
-
-static int open(PmWrapperConfig config)
-{
-    if (file_exists(config.file_path) != 0)
+    if (file_exists(context->region_config.file_path) != 0)
     {
         return 1;
     }
 
-    if ((pop = pmemobj_open(config.file_path, config.key)) == NULL)
+    context->data = pmemobj_open(context->region_config.file_path, "key");
+    if (context->data == NULL)
     {
         return 1;
     }
 
-    root_oid = pmemobj_root(pop, config.root_size);
+    context->id = pmemobj_root(POOL(context), context->region_config.root_size).pool_uuid_lo;
 
     return 0;
 }
 
-static int create(PmWrapperConfig config)
+static int create(PmBackendContext *context)
 {
-    if ((pop = pmemobj_create(config.file_path, config.key, PMEMOBJ_MIN_POOL, 0666)) == NULL)
+    context->data = pmemobj_create(context->region_config.file_path, "key", PMEMOBJ_MIN_POOL, 0666);
+    if (context->data == NULL)
     {
         return 1;
     }
 
-    root_oid = pmemobj_root(pop, config.root_size);
+    context->id = pmemobj_root(POOL(context), context->region_config.root_size).pool_uuid_lo;
 
     return 0;
 }
 
-static int p_close(PmWrapperConfig config)
+static int p_close(PmBackendContext *context)
 {
-    pmemobj_close(pop);
+    pmemobj_close(POOL(context));
     return 0;
 }
 
-static pm_offset get_root()
+static pm_region_offset get_root(PmBackendContext *context)
 {
-    return root_oid.off;
+    return pmemobj_root(POOL(context), context->region_config.root_size).off;
 }
 
-static pm_offset p_malloc(size_t size)
+static pm_region_offset p_malloc(PmBackendContext *context, size_t size)
 {
-    PMEMoid oid = get_oid_by_offset(0);
-    pmemobj_zalloc(pop, &oid, size, 0);
+    PMEMoid oid = {};
+    pmemobj_zalloc(POOL(context), &oid, size, 0);
     return oid.off;
 }
 
-static void *read_object(pm_offset offset)
+static void *read_object(PmBackendContext *context, pm_region_offset offset)
 {
-    return pmemobj_direct_inline(get_oid_by_offset(offset));
+    PMEMoid oid = {
+        .pool_uuid_lo = context->id,
+        .off = offset};
+
+    return pmemobj_direct_inline(oid);
 }
 
-static void write_object(void *dst, char *data, size_t len)
+static void write_object(PmBackendContext *context, void *dst, char *data, size_t len)
 {
-    pmemobj_memcpy_persist(pop, dst, data, len);
+    pmemobj_memcpy_persist(POOL(context), dst, data, len);
 }
 
-const PmBackend PMDK_BACKEND = {
+PmBackend PMDK_BACKEND = {
     .open = open,
     .create = create,
     .close = p_close,

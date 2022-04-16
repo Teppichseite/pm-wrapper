@@ -3,6 +3,6 @@
 
 #include "pm_wrapper.h"
 
-extern const PmBackend PMDK_BACKEND;
+extern PmBackend PMDK_BACKEND;
 
 #endif

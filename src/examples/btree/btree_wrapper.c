@@ -12,6 +12,8 @@
 #include "../pm_wrapper.h"
 #include "../pmdk_backend.h"
 
+/* TODO: Adjust file to use new interfaces
+
 struct btree_node
 {
     int64_t key;
@@ -49,9 +51,6 @@ btree_insert(struct btree *tree, int64_t key, char *value)
     PM_W(dst, &node_addr, sizeof(node_addr));
 }
 
-/*
- * btree_find -- searches for key in the tree
- */
 static const char *
 btree_find(struct btree *tree, int64_t key)
 {
@@ -69,9 +68,6 @@ btree_find(struct btree *tree, int64_t key)
     return NULL;
 }
 
-/*
- * btree_foreach -- invoke callback for every node
- */
 static void
 btree_foreach(struct btree_node *node,
               void (*cb)(struct btree_node *node))
@@ -89,18 +85,12 @@ btree_foreach(struct btree_node *node,
     btree_foreach(PM_R(node)->slots[1], cb);
 }
 
-/*
- * btree_node_print -- prints content of the btree node
- */
 static void
 btree_node_print(struct btree_node *node)
 {
     printf("%" PRIu64 " %s\n", PM_R(node)->key, PM_R(node)->value);
 }
 
-/*
- * btree_print -- initiates foreach node print
- */
 static void
 btree_print(struct btree *tree)
 {
@@ -118,11 +108,13 @@ int main(int argc, char *argv[])
     char *path = argv[1];
 
     PmWrapperConfig config = {
-        .key = "btree",
-        .file_path = path,
-        .root_size = sizeof(struct btree)};
+        .backend = PMDK_BACKEND,
+        .main_region_config = {
+            .key = "btree",
+            .file_path = path,
+            .root_size = sizeof(struct btree)}};
 
-    if (pm_init(config, PMDK_BACKEND) != 0)
+    if (pm_init(config) != 0)
     {
         return 1;
     };
@@ -163,4 +155,10 @@ int main(int argc, char *argv[])
     pm_close();
 
     return 0;
+}
+
+*/
+
+int main(int argc, char *argv[])
+{
 }
