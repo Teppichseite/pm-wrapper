@@ -32,17 +32,17 @@ pm_region_reference_id pm_init_reg(PmRegionConfig region_config)
     {
         pm_region_reference_id ref_id = rim_get_reference_id(context->id);
         insert_context(ref_id, context);
-        return 0;
+        return ref_id;
     }
 
     if (config.backend->create(context) == 0)
     {
         pm_region_reference_id ref_id = rim_register_region(context->id);
         insert_context(ref_id, context);
-        return 0;
+        return ref_id;
     }
 
-    return 1;
+    return 0;
 };
 
 int pm_init(PmWrapperConfig pm_config)
@@ -108,9 +108,11 @@ void pm_write_object(void *ptr, char *data, int size){
 
 };
 
-int pm_close_reg(pm_region_reference_id reference_id){
+int pm_close_reg(pm_region_reference_id reference_id)
+{
     return 0;
 };
-int pm_close(){
+int pm_close()
+{
     return 0;
 };

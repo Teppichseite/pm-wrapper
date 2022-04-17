@@ -22,6 +22,7 @@ void rim_init(PmBackend pm_backend, PmBackendContext *pm_main_context, bool crea
 
     if (!created)
     {
+        region_id_map = (RegionIdMap *)backend.read_object(main_context, root->region_id_table);
         return;
     }
 
@@ -33,6 +34,8 @@ void rim_init(PmBackend pm_backend, PmBackendContext *pm_main_context, bool crea
 
     region_id_map = (RegionIdMap *)backend.read_object(main_context, rim_offset);
     region_id_map->current_ref_id = 0;
+
+    rim_register_region(pm_main_context->id);
 }
 
 pm_region_id rim_get_reference_id(pm_region_id region_id)
@@ -50,7 +53,7 @@ pm_region_id rim_get_reference_id(pm_region_id region_id)
 
 pm_region_reference_id rim_register_region(pm_region_id region_id)
 {
-    pm_region_reference_id new_ref_id = region_id_map->current_ref_id + 1;
-    region_id_map->region_ids[new_ref_id] = region_id;
-    return new_ref_id;
+    region_id_map->current_ref_id++;
+    region_id_map->region_ids[region_id_map->current_ref_id] = region_id;
+    return region_id_map->current_ref_id;
 }
