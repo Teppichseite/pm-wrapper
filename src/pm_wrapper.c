@@ -31,14 +31,14 @@ pm_region_reference_id pm_init_reg(PmRegionConfig region_config)
     if (config.backend->open(context) == 0)
     {
         pm_region_reference_id ref_id = rim_get_reference_id(context->id);
-        insert_context(ref_id, context);
+        cm_insert_context(ref_id, context);
         return ref_id;
     }
 
     if (config.backend->create(context) == 0)
     {
         pm_region_reference_id ref_id = rim_register_region(context->id);
-        insert_context(ref_id, context);
+        cm_insert_context(ref_id, context);
         return ref_id;
     }
 
@@ -66,15 +66,15 @@ int pm_init(PmWrapperConfig pm_config)
     }
 
     rim_init(*(config.backend), main_context, created);
-    init_context_map();
-    insert_context(MAIN_REGION_REFERENCE_ID, main_context);
+    cm_init();
+    cm_insert_context(MAIN_REGION_REFERENCE_ID, main_context);
 
     return 0;
 };
 
 void *pm_get_root_reg(pm_region_reference_id reference_id)
 {
-    PmBackendContext *context = get_context(reference_id);
+    PmBackendContext *context = cm_get_context(reference_id);
     pm_region_offset offset = config.backend->get_root(context);
     return construct_pm_ptr(reference_id, offset);
 };
@@ -87,7 +87,7 @@ void *pm_get_root()
 
 void *pm_alloc_reg(int size, pm_region_reference_id reference_id)
 {
-    PmBackendContext *context = get_context(reference_id);
+    PmBackendContext *context = cm_get_context(reference_id);
     pm_region_offset offset = config.backend->malloc(context, size);
     return construct_pm_ptr(reference_id, offset);
 };
@@ -100,7 +100,7 @@ void *pm_alloc(int size)
 void *pm_read_object(void *ptr)
 {
     PmThinPointer thin_ptr = destruct_pm_ptr(ptr);
-    PmBackendContext *context = get_context(thin_ptr.reference_id);
+    PmBackendContext *context = cm_get_context(thin_ptr.reference_id);
     return config.backend->read_object(context, thin_ptr.offset);
 };
 
@@ -110,9 +110,15 @@ void pm_write_object(void *ptr, char *data, int size){
 
 int pm_close_reg(pm_region_reference_id reference_id)
 {
+    PmBackendContext *context = cm_get_context(reference_id);
+    config.backend->close(context);
+    cm_remove_context(reference_id);
     return 0;
 };
+
 int pm_close()
 {
+    pm_close_reg(MAIN_REGION_REFERENCE_ID);
+    cm_free();
     return 0;
 };
