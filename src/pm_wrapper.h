@@ -71,8 +71,8 @@ void *pm_read_object(void *ptr);
 
 void pm_write_object(void *ptr, char *data, int size);
 
-int pm_close_reg(pm_region_reference_id reference_id);
-int pm_close();
+void pm_close_reg(pm_region_reference_id reference_id);
+void pm_close();
 
 #define PM_R(ptr) ((typeof(ptr))pm_read_object((void *)(ptr)))
 

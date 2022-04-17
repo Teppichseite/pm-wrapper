@@ -1,5 +1,7 @@
 #include "region_id_map.h"
 
+#define REGION_ID_MAP_ELEM_COUNT (1 << 16)
+
 typedef struct RegionIdMap
 {
     pm_region_reference_id current_ref_id;
@@ -28,7 +30,7 @@ void rim_init(PmBackend pm_backend, PmBackendContext *pm_main_context, bool crea
 
     pm_region_offset rim_offset = backend.malloc(
         main_context,
-        sizeof(RegionIdMap) + (1 << 16) * sizeof(pm_region_id));
+        sizeof(RegionIdMap) + REGION_ID_MAP_ELEM_COUNT * sizeof(pm_region_id));
 
     root->region_id_table = rim_offset;
 
@@ -53,6 +55,11 @@ pm_region_id rim_get_reference_id(pm_region_id region_id)
 
 pm_region_reference_id rim_register_region(pm_region_id region_id)
 {
+    if (region_id_map->current_ref_id + 1 >= REGION_ID_MAP_ELEM_COUNT)
+    {
+        return 0;
+    }
+
     region_id_map->current_ref_id++;
     region_id_map->region_ids[region_id_map->current_ref_id] = region_id;
     return region_id_map->current_ref_id;

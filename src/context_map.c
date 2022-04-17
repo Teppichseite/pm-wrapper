@@ -20,13 +20,13 @@ void cm_init()
 
 PmBackendContext *cm_get_context(pm_region_reference_id reference_id)
 {
-    PmBackendContext *context = hashmap_get(&context_map, &reference_id);
-    return context;
+    return hashmap_get(&context_map, &reference_id);
 }
 
-void cm_insert_context(pm_region_reference_id reference_id, PmBackendContext *context)
+int cm_insert_context(pm_region_reference_id reference_id, PmBackendContext *context)
 {
-    hashmap_put(&context_map, &reference_id, context);
+    int result = hashmap_put(&context_map, &reference_id, context);
+    return result != 0 ? 1 : 0;
 }
 
 void cm_remove_context(pm_region_reference_id reference_id)

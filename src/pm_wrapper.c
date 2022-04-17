@@ -26,23 +26,40 @@ pm_region_reference_id pm_init_reg(PmRegionConfig region_config)
     PmBackendContext *context = (PmBackendContext *)calloc(
         sizeof(PmBackendContext),
         1);
+
+    if (context == NULL)
+    {
+        return 0;
+    }
+
     context->region_config = region_config;
 
-    if (config.backend->open(context) == 0)
+    bool inital_creation = false;
+    if (config.backend->open(context) != 0)
     {
-        pm_region_reference_id ref_id = rim_get_reference_id(context->id);
-        cm_insert_context(ref_id, context);
-        return ref_id;
+        if (config.backend->create(context) != 0)
+        {
+            return 1;
+        }
+        inital_creation = true;
     }
 
-    if (config.backend->create(context) == 0)
+    pm_region_reference_id ref_id =
+        inital_creation
+            ? rim_register_region(context->id)
+            : rim_get_reference_id(context->id);
+
+    if (ref_id == 0)
     {
-        pm_region_reference_id ref_id = rim_register_region(context->id);
-        cm_insert_context(ref_id, context);
-        return ref_id;
+        return 0;
     }
 
-    return 0;
+    if (cm_insert_context(ref_id, context) != 0)
+    {
+        return 0;
+    }
+
+    return ref_id;
 };
 
 int pm_init(PmWrapperConfig pm_config)
@@ -53,6 +70,12 @@ int pm_init(PmWrapperConfig pm_config)
     PmBackendContext *main_context = (PmBackendContext *)calloc(
         sizeof(PmBackendContext),
         1);
+
+    if (main_context == NULL)
+    {
+        return 1;
+    }
+
     main_context->region_config = config.main_region_config;
 
     bool created = false;
@@ -69,56 +92,89 @@ int pm_init(PmWrapperConfig pm_config)
     cm_init();
     cm_insert_context(MAIN_REGION_REFERENCE_ID, main_context);
 
+    PmMainRegionRoot *root = (PmMainRegionRoot *)pm_read_object(
+        pm_get_root_reg(MAIN_REGION_REFERENCE_ID));
+
+    pm_region_offset program_root_offset = config.backend->malloc(
+        main_context, sizeof(config.main_region_config.root_size - sizeof(PmMainRegionRoot)));
+
+    root->program_root = program_root_offset;
+
     return 0;
-};
+}
 
 void *pm_get_root_reg(pm_region_reference_id reference_id)
 {
     PmBackendContext *context = cm_get_context(reference_id);
+    if (context == NULL)
+    {
+        return NULL;
+    }
+
     pm_region_offset offset = config.backend->get_root(context);
     return construct_pm_ptr(reference_id, offset);
-};
+}
 
 void *pm_get_root()
 {
     PmMainRegionRoot *root = (PmMainRegionRoot *)pm_read_object(pm_get_root_reg(1));
+
+    if (root == NULL)
+    {
+        return NULL;
+    }
+
     return construct_pm_ptr(MAIN_REGION_REFERENCE_ID, root->program_root);
 }
 
 void *pm_alloc_reg(int size, pm_region_reference_id reference_id)
 {
     PmBackendContext *context = cm_get_context(reference_id);
+    if (context == NULL)
+    {
+        return NULL;
+    }
+
     pm_region_offset offset = config.backend->malloc(context, size);
     return construct_pm_ptr(reference_id, offset);
-};
+}
 
 void *pm_alloc(int size)
 {
     return pm_alloc_reg(size, MAIN_REGION_REFERENCE_ID);
-};
+}
 
 void *pm_read_object(void *ptr)
 {
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+
     PmThinPointer thin_ptr = destruct_pm_ptr(ptr);
     PmBackendContext *context = cm_get_context(thin_ptr.reference_id);
+
+    if (context == NULL)
+    {
+        return NULL;
+    }
+
     return config.backend->read_object(context, thin_ptr.offset);
 };
 
-void pm_write_object(void *ptr, char *data, int size){
+void pm_write_object(void *ptr, char *data, int size)
+{
+}
 
-};
-
-int pm_close_reg(pm_region_reference_id reference_id)
+void pm_close_reg(pm_region_reference_id reference_id)
 {
     PmBackendContext *context = cm_get_context(reference_id);
     config.backend->close(context);
     cm_remove_context(reference_id);
-    return 0;
-};
+}
 
-int pm_close()
+void pm_close()
 {
     pm_close_reg(MAIN_REGION_REFERENCE_ID);
     cm_free();
-    return 0;
-};
+}
