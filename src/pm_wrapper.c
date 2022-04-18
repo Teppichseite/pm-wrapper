@@ -98,7 +98,7 @@ int pm_init(PmWrapperConfig pm_config)
     pm_region_offset program_root_offset = config.backend->malloc(
         main_context, sizeof(config.main_region_config.root_size - sizeof(PmMainRegionRoot)));
 
-    root->program_root = program_root_offset;
+    PM_W(root->program_root, program_root_offset);
 
     return 0;
 }
@@ -164,6 +164,7 @@ void *pm_read_object(void *ptr)
 
 void pm_write_object(void *ptr, char *data, int size)
 {
+       
 }
 
 void pm_close_reg(pm_region_reference_id reference_id)

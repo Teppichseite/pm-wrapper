@@ -76,7 +76,7 @@ void pm_close();
 
 #define PM_R(ptr) ((typeof(ptr))pm_read_object((void *)(ptr)))
 
-#define PM_W(object, value, size) (pm_write_object((object), (char *)(value), (size)))
+#define PM_W(field, value) (pm_write_object(&(field), (char *)(&(value)), sizeof(value)))
 
 #define MAIN_REGION_REFERENCE_ID 1
 
