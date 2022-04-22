@@ -5,6 +5,8 @@ void cm_init();
 
 PmBackendContext *cm_get_context(pm_region_reference_id reference_id);
 
+PmBackendContext *cm_get_context_by_vm_ptr(void *ptr);
+
 int cm_insert_context(pm_region_reference_id reference_id, PmBackendContext *context);
 
 void cm_remove_context(pm_region_reference_id reference_id);

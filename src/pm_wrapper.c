@@ -164,7 +164,8 @@ void *pm_read_object(void *ptr)
 
 void pm_write_object(void *ptr, char *data, int size)
 {
-       
+    PmBackendContext *context = cm_get_context_by_vm_ptr(ptr);
+    config.backend->write_object(context, ptr, data, size);
 }
 
 void pm_close_reg(pm_region_reference_id reference_id)
@@ -172,6 +173,7 @@ void pm_close_reg(pm_region_reference_id reference_id)
     PmBackendContext *context = cm_get_context(reference_id);
     config.backend->close(context);
     cm_remove_context(reference_id);
+    free(context);
 }
 
 void pm_close()

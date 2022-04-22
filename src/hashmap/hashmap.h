@@ -1,3 +1,5 @@
+// Source: https://github.com/DavidLeeds/hashmap
+
 /*
  * Copyright (c) 2016-2020 David Leeds <davidesleeds@gmail.com>
  *

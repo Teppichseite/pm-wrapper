@@ -21,6 +21,8 @@ static int open(PmBackendContext *context)
 
     context->id = pmemobj_root(POOL(context), context->region_config.root_size).pool_uuid_lo;
 
+    context->first_address = read_object(context, 0);
+
     return 0;
 }
 
@@ -33,6 +35,8 @@ static int create(PmBackendContext *context)
     }
 
     context->id = pmemobj_root(POOL(context), context->region_config.root_size).pool_uuid_lo;
+
+    context->first_address = read_object(context, 0);
 
     return 0;
 }

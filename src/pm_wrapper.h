@@ -28,6 +28,7 @@ typedef struct PmRegionConfig
     pm_region_reference_id reference_id;
     char *file_path;
     size_t root_size;
+    size_t size;
 } PmRegionConfig;
 
 typedef struct PmBackend PmBackend;
@@ -44,6 +45,7 @@ typedef struct PmBackendContext
     pm_region_reference_id reference_id;
     pm_region_id id;
     void *data;
+    void *first_address;
 } PmBackendContext;
 
 struct PmBackend
