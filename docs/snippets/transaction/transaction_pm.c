@@ -23,6 +23,7 @@ int main(int argc, char const *argv[])
         node->value1 = 2;
         node->value2 = 3;
     }
+    // TBD: TX Error handling
 
     return 0;
 }
