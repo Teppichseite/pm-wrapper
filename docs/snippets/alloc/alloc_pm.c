@@ -5,6 +5,7 @@ int main(int argc, char const *argv[])
     // Returns a PM pointer
     int *ptr = (int *)pm_alloc(sizeof(int));
 
+    // Error handling works like with malloc
     if (ptr == NULL)
     {
         exit(1);
