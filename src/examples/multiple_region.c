@@ -1,4 +1,5 @@
-#include "../include/pm_wrapper.h"
+#include "../runtime/pm_wrapper.h"
+#include "../runtime/context_map.h"
 #include "../backends/pmdk_backend.h"
 
 int main(int argc, char *argv[])

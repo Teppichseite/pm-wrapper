@@ -1,7 +1,7 @@
 #ifndef CONTEXT_MAP_H
 #define CONTEXT_MAP_H
 
-#include "../include/pm_wrapper.h"
+#include "../runtime/pm_wrapper.h"
 #include <stdbool.h>
 
 void cm_init();

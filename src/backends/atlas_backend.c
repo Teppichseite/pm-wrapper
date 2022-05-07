@@ -1,4 +1,4 @@
-#include "../include/pm_wrapper.h"
+#include "../runtime/pm_wrapper.h"
 #include "atlas_backend.h"
 #include <stdlib.h>
 #include "../../Atlas/runtime/include/atlas_api.h"

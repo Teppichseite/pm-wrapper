@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include "../include/pm_wrapper.h"
+#include "../runtime/pm_wrapper.h"
 #include "context_map.h"
 #include "region_id_map.h"
 

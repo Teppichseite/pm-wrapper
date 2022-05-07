@@ -1,4 +1,4 @@
-#include "../include/pm_wrapper.h"
+#include "../runtime/pm_wrapper.h"
 #include "pmdk_backend.h"
 #include <libpmemobj.h>
 #include <stdlib.h>

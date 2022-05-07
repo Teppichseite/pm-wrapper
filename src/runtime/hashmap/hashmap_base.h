@@ -11,8 +11,7 @@
 
 struct hashmap_entry;
 
-struct hashmap_base
-{
+struct hashmap_base {
     size_t table_size_init;
     size_t table_size;
     size_t size;
@@ -24,11 +23,11 @@ struct hashmap_base
 };
 
 void hashmap_base_init(struct hashmap_base *hb,
-                       size_t (*hash_func)(const void *), int (*compare_func)(const void *, const void *));
+        size_t (*hash_func)(const void *), int (*compare_func)(const void *, const void *));
 void hashmap_base_cleanup(struct hashmap_base *hb);
 
 void hashmap_base_set_key_alloc_funcs(struct hashmap_base *hb,
-                                      void *(*key_dup_func)(const void *), void (*key_free_func)(void *));
+    void *(*key_dup_func)(const void *), void (*key_free_func)(void *));
 
 int hashmap_base_reserve(struct hashmap_base *hb, size_t capacity);
 
@@ -40,7 +39,7 @@ void hashmap_base_clear(struct hashmap_base *hb);
 void hashmap_base_reset(struct hashmap_base *hb);
 
 struct hashmap_entry *hashmap_base_iter(const struct hashmap_base *hb,
-                                        const struct hashmap_entry *pos);
+        const struct hashmap_entry *pos);
 bool hashmap_base_iter_valid(const struct hashmap_base *hb, const struct hashmap_entry *iter);
 bool hashmap_base_iter_next(const struct hashmap_base *hb, struct hashmap_entry **iter);
 bool hashmap_base_iter_remove(struct hashmap_base *hb, struct hashmap_entry **iter);
