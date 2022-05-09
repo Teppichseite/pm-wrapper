@@ -1,6 +1,7 @@
 #ifndef PM_WRAPPER_H
 #define PM_WRAPPER_H
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef __UINT64_TYPE__ pm_region_offset;
 typedef __UINT64_TYPE__ pm_region_id;
@@ -50,8 +51,7 @@ typedef struct PmBackendContext
 struct PmBackend
 {
     int (*init)();
-    int (*open)(PmBackendContext *context);
-    int (*create)(PmBackendContext *context);
+    int (*open_or_create)(PmBackendContext *context, bool *created_new);
     void (*close)(PmBackendContext *context);
     void (*finalize)();
     pm_region_offset (*get_root)(PmBackendContext *context);

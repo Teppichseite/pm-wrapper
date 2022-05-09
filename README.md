@@ -5,20 +5,14 @@ Developers can write one program and can switch out the pm library in the backgr
 
 ## Required dependencies
 - make
-- clang 
-    - you can also adjust the CC variable in the Makefile
-- libpmemobj
+- docker
 
-## Documentation
-File `./src/pm_wrapper.h` explains all important wrapper functions.
+## Run Tests
+- Run `make build_docker`
+- Run `make run_docker`
 
-## Examples
-There are two versions of a btree program:
-- `./src/examples/btree_direct.c` uses libmemobj directly
-- `./src/examples/btree_wrapper.c` uses the pm wrapper
-- run `make` to build the programs
-
-
-## Backend examples
-File `pmdk_backend.c` implements an example backend with libmemobj.
+## Backends
+Currently there are two backend implementations:
+- PMDK (https://pmem.io/pmdk/)
+- Atlas HP (https://github.com/HewlettPackard/Atlas)
 

@@ -11,30 +11,26 @@ static int init()
     return 0;
 }
 
-static int open(PmBackendContext *context)
+static int open_or_create(PmBackendContext *context, bool *created_new)
 {
-    if (access(context->region_config.file_path, F_OK) != 0)
+
+    if (access(context->region_config.file_path, F_OK) == 0)
     {
-        return 1;
+        context->data = pmemobj_open(context->region_config.file_path, "key");
+        if (context->data == NULL)
+        {
+            return 1;
+        }
+        *created_new = false;
     }
-
-    context->data = pmemobj_open(context->region_config.file_path, "key");
-    if (context->data == NULL)
+    else
     {
-        return 1;
-    }
-
-    context->id = pmemobj_root(POOL(context), context->region_config.root_size).pool_uuid_lo;
-
-    return 0;
-}
-
-static int create(PmBackendContext *context)
-{
-    context->data = pmemobj_create(context->region_config.file_path, "key", PMEMOBJ_MIN_POOL, 0666);
-    if (context->data == NULL)
-    {
-        return 1;
+        context->data = pmemobj_create(context->region_config.file_path, "key", PMEMOBJ_MIN_POOL, 0666);
+        if (context->data == NULL)
+        {
+            return 1;
+        }
+        *created_new = true;
     }
 
     context->id = pmemobj_root(POOL(context), context->region_config.root_size).pool_uuid_lo;
@@ -92,8 +88,7 @@ static void write_object(PmBackendContext *context, void *dst, char *data, size_
 
 PmBackend PMDK_BACKEND = {
     .init = init,
-    .open = open,
-    .create = create,
+    .open_or_create = open_or_create,
     .close = p_close,
     .finalize = finalize,
     .get_root = get_root,

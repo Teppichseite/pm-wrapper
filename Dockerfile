@@ -1,17 +1,16 @@
 FROM louisjenkinscs/atlas-hp
 
-WORKDIR /usr/home/atlas/compiler-plugin
-RUN ./build_plugin
+USER root
 
-WORKDIR /usr/home/atlas/runtime
-RUN mkdir build-all
-WORKDIR /usr/home/atlas/runtime/build-all
-RUN cmake ..
-RUN make
+RUN apt-get -y update
+RUN apt-get -y install libpmem-dev librpmem-dev libpmemblk-dev libpmemlog-dev libpmemobj-dev libpmempool-dev libpmempool-dev
 
-WORKDIR /usr/home
-RUN mkdir pm-wrapper
+WORKDIR /home/Atlas/pm-wrapper
 COPY . .
-RUN make
 
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+RUN make atlas
+RUN make pmdk
+
+WORKDIR /home/Atlas/pm-wrapper/bin
+
+ENTRYPOINT ["/bin/sh", "-c" , "./multiple_region_atlas && ./multiple_region_pmdk"]

@@ -34,18 +34,14 @@ pm_region_reference_id pm_init_reg(PmRegionConfig region_config)
 
     context->region_config = region_config;
 
-    bool inital_creation = false;
-    if (config.backend->open(context) != 0)
+    bool created_new = false;
+    if (config.backend->open_or_create(context, &created_new) != 0)
     {
-        if (config.backend->create(context) != 0)
-        {
-            return 1;
-        }
-        inital_creation = true;
+        return 1;
     }
 
     pm_region_reference_id ref_id =
-        inital_creation
+        created_new
             ? rim_register_region(context->id)
             : rim_get_reference_id(context->id);
 
@@ -80,17 +76,13 @@ int pm_init(PmWrapperConfig pm_config)
 
     config.backend->init();
 
-    bool created = false;
-    if (config.backend->open(main_context) != 0)
+    bool created_new = false;
+    if (config.backend->open_or_create(main_context, &created_new) != 0)
     {
-        if (config.backend->create(main_context) != 0)
-        {
-            return 1;
-        }
-        created = true;
+        return 1;
     }
 
-    rim_init(*(config.backend), main_context, created);
+    rim_init(*(config.backend), main_context, created_new);
     cm_init();
     cm_insert_context(MAIN_REGION_REFERENCE_ID, main_context);
 
