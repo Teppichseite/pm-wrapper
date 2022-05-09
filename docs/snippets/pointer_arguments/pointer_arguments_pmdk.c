@@ -1,7 +1,8 @@
 #include <libpmemobj.h>
 
-void modify_data(int *ptr)
+void modify_data(PMEMoid pm_ptr)
 {
+    int *ptr = (int *)pmemobj_direct(pm_ptr);
     *ptr = 1;
 }
 
@@ -19,9 +20,7 @@ int main(int argc, char const *argv[])
     PMEMoid oid = {};
     pmemobj_zalloc(pool, &oid, sizeof(int), 0);
 
-    int *ptr = (int *)pmemobj_direct(oid);
-
-    modify_data(ptr);
+    modify_data(oid);
 
     return 0;
 }

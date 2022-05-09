@@ -3,33 +3,33 @@
 
 struct Node;
 
+POBJ_LAYOUT_BEGIN(node_store);
+POBJ_LAYOUT_ROOT(node_store, struct Node);
+POBJ_LAYOUT_END(node_store);
+
 struct Node
 {
-    TOID(struct Node) *next;
+    TOID(struct Node)
+    next;
     int value;
 };
-
-struct Foo
-{
-    int test;
-};
-
 
 int main(int argc, char const *argv[])
 {
     PMEMobjpool *pool;
-    TOID(struct Node) node;
+    TOID(struct Node)
+    node1;
+    pmemobj_zalloc(pool, &node1, sizeof(struct Node), 0);
 
-    struct Node *node2 = (struct Node *)pm_alloc(sizeof(struct Node));
-    if (node2 == NULL)
-    {
-        exit(1);
-    }
+    D_RW(node1)->value = 1;
 
-    node2->value = 2;
+    TOID(struct Node)
+    node2;
+    pmemobj_zalloc(pool, &node2, sizeof(struct Node), 0);
 
-    // After program restart the pointer is still completely valid
-    node1->next = node2;
+    D_RW(node2)->value = 2;
+
+    D_RW(node2)->next = node2;
 
     return 0;
 }

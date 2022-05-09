@@ -1,5 +1,5 @@
-#include "../../../src/pm_wrapper.h"
-#include "../../../src/pmdk_backend.h"
+#include "../../../src/runtime/pm_wrapper.h"
+#include "../../../src/backends/pmdk_backend.h"
 
 int main(int argc, char const *argv[])
 {

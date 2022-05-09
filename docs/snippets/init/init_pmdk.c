@@ -1,12 +1,12 @@
-#include "../src/ex_common.h"
 #include <libpmemobj.h>
+#include <unistd.h>
 
 int main(int argc, char const *argv[])
 {
     char *file_path = "./test";
     PMEMobjpool *pop;
 
-    if (file_exists(file_path) == 0)
+    if (access("key", F_OK) == 0)
     {
         pop = pmemobj_open(file_path, "key");
     }

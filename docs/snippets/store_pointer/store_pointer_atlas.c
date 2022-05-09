@@ -1,4 +1,6 @@
 #include "stdlib.h"
+#include "../../Atlas/runtime/include/atlas_api.h"
+#include "../../Atlas/runtime/include/atlas_alloc.h"
 
 struct Node;
 
@@ -10,7 +12,8 @@ struct Node
 
 int main(int argc, char const *argv[])
 {
-    struct Node *node1 = (struct Node *)malloc(sizeof(struct Node));
+    uint32_t region_id;
+    struct Node *node1 = (struct Node *)nvm_alloc(sizeof(struct Node), region_id);
     if (node1 == NULL)
     {
         exit(1);
@@ -18,7 +21,7 @@ int main(int argc, char const *argv[])
 
     node1->value = 1;
 
-    struct Node *node2 = (struct Node *)malloc(sizeof(struct Node));
+    struct Node *node2 = (struct Node *)nvm_alloc(sizeof(struct Node), region_id);
     if (node2 == NULL)
     {
         exit(1);

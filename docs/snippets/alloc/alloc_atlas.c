@@ -3,9 +3,9 @@
 
 int main(int argc, char const *argv[])
 {
-    uint32_t id;
+    uint32_t region_id;
 
-    int *ptr = (int *)nvm_alloc(sizeof(int), id);
+    int *ptr = (int *)nvm_alloc(sizeof(int), region_id);
 
     if (ptr == NULL)
     {
