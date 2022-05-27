@@ -1,3 +1,7 @@
 /data
 /.vscode
 /bin
+
+/src/clang-plugin/build
+/src/clang-plugin/.cache
+/src/clang-plugin/.vscode
