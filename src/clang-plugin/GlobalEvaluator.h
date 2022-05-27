@@ -23,6 +23,7 @@ public:
   explicit GlobalEvaluator(clang::ASTContext *ctx) : context{ctx} {};
   void run();
   bool VisitFunctionDecl(clang::FunctionDecl *fd);
+  bool VisitVarDecl(clang::VarDecl *decl);
 };
 
 #endif

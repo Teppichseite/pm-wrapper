@@ -1,4 +1,5 @@
 #include "VarContext.h"
+#include "Types.h"
 
 PointerType VarContext::getVariableType(clang::VarDecl *decl) {
   return variables[decl];
@@ -24,6 +25,22 @@ void VarContext::setFunctionType(clang::FunctionDecl *decl, FunctionType type) {
   functions[decl] = type;
 }
 
+std::string pointerTypeToString(PointerType type) {
+  switch (type) {
+  case PM:
+    return "PM";
+  case VM:
+    return "VM";
+  case UNDECLARED:
+    return "UNDECLARED";
+  case UNKNOWN:
+    return "UNKNWON";
+  case NO_POINTER:
+    return "NO_POINTER";
+  }
+  return "INVALID_TYPE";
+}
+
 void VarContext::printContext() {
 
   llvm::outs() << "Variables: \n";
@@ -31,7 +48,8 @@ void VarContext::printContext() {
     auto decl = entry.first;
     auto type = entry.second;
 
-    llvm::outs() << decl->getNameAsString() << " -> " << type << "\n";
+    llvm::outs() << decl->getNameAsString() << " -> "
+                 << pointerTypeToString(type) << "\n";
   }
 
   llvm::outs() << "\nFunctions: \n";
@@ -41,9 +59,9 @@ void VarContext::printContext() {
 
     llvm::outs() << decl->getNameAsString() << "(";
     for (auto paramType : type.parameterTypes) {
-      llvm::outs() << paramType << ", ";
+      llvm::outs() << pointerTypeToString(paramType) << ", ";
     }
-    llvm::outs() << ") -> " << type.returnType << "\n";
+    llvm::outs() << ") -> " << pointerTypeToString(type.returnType) << "\n";
   }
   llvm::outs() << "\n";
 }

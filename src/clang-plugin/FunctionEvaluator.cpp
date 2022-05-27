@@ -1,5 +1,6 @@
 #include "FunctionEvaluator.h"
 #include "ExpressionEvaluator.h"
+#include "PointerTypeAttribute.h"
 #include "Types.h"
 #include <algorithm>
 #include <clang/AST/ASTContext.h>
@@ -19,16 +20,23 @@ PointerType FunctionEvaluator::run() {
 }
 
 bool FunctionEvaluator::VisitVarDecl(clang::VarDecl *decl) {
+
   if (llvm::isa<clang::ParmVarDecl>(decl)) {
     return true;
   }
 
-  varContext.setVariable(decl, PointerType::UNDECLARED);
+  if (hasPointerTypeAttribute(decl)) {
+    varContext.setVariable(decl, getPointerTypeFromAttribute(decl));
+  } else {
+    varContext.setVariable(decl, PointerType::UNDECLARED);
+  }
 
   if (decl->hasInit()) {
     ExpressionEvaluator evaluator{context, varContext, decl->getInit()};
     auto type = evaluator.run();
-    varContext.setVariable(decl, type);
+    if (!hasPointerTypeAttribute(decl)) {
+      varContext.setVariable(decl, type);
+    }
     return true;
   }
 
@@ -61,5 +69,9 @@ bool FunctionEvaluator::VisitReturnStmt(clang::ReturnStmt *stmt) {
 
   ExpressionEvaluator evaluator{context, varContext, stmt->getRetValue()};
   resultingPointerType = evaluator.run();
+
+  if (hasPointerTypeAttribute(functionDecl)) {
+    resultingPointerType = getPointerTypeFromAttribute(functionDecl);
+  }
   return true;
 }

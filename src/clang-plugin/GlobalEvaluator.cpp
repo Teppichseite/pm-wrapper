@@ -1,5 +1,7 @@
 #include "GlobalEvaluator.h"
+#include "ExpressionEvaluator.h"
 #include "FunctionEvaluator.h"
+#include "PointerTypeAttribute.h"
 #include "Types.h"
 
 void GlobalEvaluator::run() {
@@ -21,6 +23,30 @@ bool GlobalEvaluator::VisitFunctionDecl(clang::FunctionDecl *fd) {
       PM_WRAPPER_FUNCTION_NAMES.end()) {
     varContext.setFunctionType(
         fd, {.returnType = PointerType::PM, .reserved = true});
+    return true;
+  }
+
+  return true;
+}
+
+bool GlobalEvaluator::VisitVarDecl(clang::VarDecl *decl) {
+
+  if (decl->isLocalVarDecl()) {
+    return true;
+  }
+
+  if (hasPointerTypeAttribute(decl)) {
+    varContext.setVariable(decl, getPointerTypeFromAttribute(decl));
+  } else {
+    varContext.setVariable(decl, PointerType::UNDECLARED);
+  }
+
+  if (decl->hasInit()) {
+    ExpressionEvaluator evaluator{context, varContext, decl->getInit()};
+    auto type = evaluator.run();
+    if (!hasPointerTypeAttribute(decl)) {
+      varContext.setVariable(decl, type);
+    }
     return true;
   }
 
