@@ -43,6 +43,9 @@ public:
   bool VisitStringLiteral(clang::StringLiteral *literal);
   bool VisitCastExpr(clang::CastExpr *expr);
   bool VisitCallExpr(clang::CallExpr *expr);
+  bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr);
+  bool VisitInitListExpr(clang::InitListExpr *expr);
+  bool VisitMemberExpr(clang::MemberExpr *expr);
 };
 
 #endif

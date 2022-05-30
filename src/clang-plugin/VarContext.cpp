@@ -29,16 +29,14 @@ std::string pointerTypeToString(PointerType type) {
   switch (type) {
   case PM:
     return "PM";
-  case VM:
-    return "VM";
+  case NO_PM:
+    return "NO PM";
   case UNDECLARED:
     return "UNDECLARED";
   case UNKNOWN:
     return "UNKNWON";
-  case NO_POINTER:
-    return "NO_POINTER";
   }
-  return "INVALID_TYPE";
+  return "INVALID TYPE";
 }
 
 void VarContext::printContext() {

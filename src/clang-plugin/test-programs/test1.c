@@ -1,15 +1,12 @@
-#define PM_PTR
+#define PM __attribute__((pointer_type(1)))
 
 void *pm_root();
 
-__attribute__((pointer_type (0))) int test1;
+struct test {
+  int a;
+};
 
-void test(int *a, int *b) {
-  int *c = a;
-  int *d = b;
-}
 int main() {
-  int *ptr = (int *)pm_root();
-  int *c = 0;
-  test(ptr, c);
+  int *array[1] = {0};
+  PM int *ptr = array[0];
 }

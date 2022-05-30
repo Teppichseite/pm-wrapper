@@ -2,7 +2,7 @@
 #define TYPES_H
 #include <vector>
 
-enum PointerType { PM, VM, UNDECLARED, UNKNOWN, NO_POINTER };
+enum PointerType { UNKNOWN, PM, NO_PM, UNDECLARED };
 
 struct FunctionType {
   PointerType returnType;

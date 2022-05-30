@@ -14,7 +14,7 @@
 #include <llvm-13/llvm/Support/raw_ostream.h>
 
 PointerType FunctionEvaluator::run() {
-  resultingPointerType = PointerType::NO_POINTER;
+  resultingPointerType = PointerType::NO_PM;
   this->TraverseDecl(functionDecl);
   return resultingPointerType;
 }
@@ -45,6 +45,11 @@ bool FunctionEvaluator::VisitVarDecl(clang::VarDecl *decl) {
 
 bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
   const auto &parents = context->getParents(*expr);
+
+  if (parents.size() <= 0) {
+    return true;
+  }
+
   auto stmt = parents[0].get<clang::Stmt>();
   if (!stmt) {
     return true;
