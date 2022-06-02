@@ -5,19 +5,39 @@
 #include "Types.h"
 #include <vector>
 
+GlobalEvaluator::GlobalEvaluator(clang::ASTContext *ctx) : context{ctx} {
+  pmWrapperFunctionTypes = {
+      {"pm_root", {.returnType = PointerType::PM, .parameterTypes = {}}},
+      {"pm_root_reg",
+       {.returnType = PointerType::PM, .parameterTypes = {PointerType::NO_PM}}},
+      {"pm_alloc",
+       {.returnType = PointerType::PM, .parameterTypes = {PointerType::NO_PM}}},
+      {"pm_alloc_reg",
+       {.returnType = PointerType::PM,
+        .parameterTypes = {PointerType::NO_PM, PointerType::NO_PM}}},
+      {"pm_calloc",
+       {.returnType = PointerType::PM, .parameterTypes = {PointerType::NO_PM}}},
+      {"pm_calloc_reg",
+       {.returnType = PointerType::PM,
+        .parameterTypes = {PointerType::NO_PM, PointerType::NO_PM}}},
+      {"pm_read_object",
+       {.returnType = PointerType::NO_PM,
+        .parameterTypes = {PointerType::PM}}}};
+}
+
 void GlobalEvaluator::run() {
   this->TraverseDecl(context->getTranslationUnitDecl());
 
   std::vector<PointerType> paramTypes;
   for (int i = 0; i < mainFunction->getNumParams(); i++) {
     paramTypes.push_back(PointerType::NO_PM);
-    varContext.setVariable(mainFunction->getParamDecl(i), PointerType::NO_PM);
+    globalContext.setVariable(mainFunction->getParamDecl(i), PointerType::NO_PM);
   }
-  varContext.setFunctionType(mainFunction, {.returnType = PointerType::NO_PM,
+  globalContext.setFunctionType(mainFunction, {.returnType = PointerType::NO_PM,
                                             .parameterTypes = paramTypes});
-  FunctionEvaluator functionEvaluator{context, varContext, mainFunction};
+  FunctionEvaluator functionEvaluator{context, globalContext, mainFunction};
   functionEvaluator.run();
-  varContext.printContext();
+  globalContext.printContext();
 }
 
 bool GlobalEvaluator::VisitFunctionDecl(clang::FunctionDecl *fd) {
@@ -28,10 +48,8 @@ bool GlobalEvaluator::VisitFunctionDecl(clang::FunctionDecl *fd) {
   }
 
   auto funcName = fd->getNameAsString();
-  if (PM_WRAPPER_FUNCTION_NAMES.find(funcName) !=
-      PM_WRAPPER_FUNCTION_NAMES.end()) {
-    varContext.setFunctionType(
-        fd, {.returnType = PointerType::PM, .reserved = true});
+  if (pmWrapperFunctionTypes.find(funcName) != pmWrapperFunctionTypes.end()) {
+    globalContext.setFunctionType(fd, pmWrapperFunctionTypes[funcName]);
     return true;
   }
 
@@ -45,16 +63,16 @@ bool GlobalEvaluator::VisitVarDecl(clang::VarDecl *decl) {
   }
 
   if (hasPointerTypeAttribute(decl)) {
-    varContext.setVariable(decl, getPointerTypeFromAttribute(decl));
+    globalContext.setVariable(decl, getPointerTypeFromAttribute(decl));
   } else {
-    varContext.setVariable(decl, PointerType::UNDECLARED);
+    globalContext.setVariable(decl, PointerType::UNDECLARED);
   }
 
   if (decl->hasInit()) {
-    ExpressionEvaluator evaluator{context, varContext, decl->getInit()};
+    ExpressionEvaluator evaluator{context, globalContext, decl->getInit()};
     auto type = evaluator.run();
     if (!hasPointerTypeAttribute(decl)) {
-      varContext.setVariable(decl, type);
+      globalContext.setVariable(decl, type);
     }
     return true;
   }

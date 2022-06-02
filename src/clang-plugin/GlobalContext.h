@@ -2,12 +2,18 @@
 #define VAR_CONTEXT_H
 #include "Types.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/Expr.h>
 
-class VarContext {
+struct PluginOptions {
+  std::string sourcePath;
+};
+
+class GlobalContext {
 
 private:
   std::map<clang::VarDecl *, PointerType> variables;
   std::map<clang::FunctionDecl *, FunctionType> functions;
+  PluginOptions options;
 
 public:
   PointerType getVariableType(clang::VarDecl *decl);
@@ -20,6 +26,8 @@ public:
   void setFunctionType(clang::FunctionDecl *decl, FunctionType type);
 
   void printContext();
+
+  bool isSymoblPartOfSource(clang::DeclRefExpr expr);
 };
 
 #endif

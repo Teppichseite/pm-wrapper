@@ -1,27 +1,27 @@
-#include "VarContext.h"
+#include "GlobalContext.h"
 #include "Types.h"
 
-PointerType VarContext::getVariableType(clang::VarDecl *decl) {
+PointerType GlobalContext::getVariableType(clang::VarDecl *decl) {
   return variables[decl];
 }
 
-FunctionType &VarContext::getFunctionType(clang::FunctionDecl *decl) {
+FunctionType &GlobalContext::getFunctionType(clang::FunctionDecl *decl) {
   return functions[decl];
 }
 
-bool VarContext::isVariableSet(clang::VarDecl *decl) {
+bool GlobalContext::isVariableSet(clang::VarDecl *decl) {
   return variables.count(decl);
 }
 
-bool VarContext::isFunctionSet(clang::FunctionDecl *decl) {
+bool GlobalContext::isFunctionSet(clang::FunctionDecl *decl) {
   return functions.count(decl);
 }
 
-void VarContext::setVariable(clang::VarDecl *decl, PointerType type) {
+void GlobalContext::setVariable(clang::VarDecl *decl, PointerType type) {
   variables[decl] = type;
 }
 
-void VarContext::setFunctionType(clang::FunctionDecl *decl, FunctionType type) {
+void GlobalContext::setFunctionType(clang::FunctionDecl *decl, FunctionType type) {
   functions[decl] = type;
 }
 
@@ -39,7 +39,7 @@ std::string pointerTypeToString(PointerType type) {
   return "INVALID TYPE";
 }
 
-void VarContext::printContext() {
+void GlobalContext::printContext() {
 
   llvm::outs() << "Variables: \n";
   for (auto entry : variables) {
@@ -63,3 +63,7 @@ void VarContext::printContext() {
   }
   llvm::outs() << "\n";
 }
+
+bool GlobalContext::isSymoblPartOfSource(clang::DeclRefExpr expr){
+  
+};

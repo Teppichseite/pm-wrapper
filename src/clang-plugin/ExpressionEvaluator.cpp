@@ -73,7 +73,7 @@ bool ExpressionEvaluator::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
   }
 
   clang::VarDecl *varDecl = llvm::dyn_cast<clang::VarDecl>(expr->getDecl());
-  setType(expr, varContext.getVariableType(varDecl));
+  setType(expr, globalContext.getVariableType(varDecl));
 
   return false;
 }
@@ -82,8 +82,8 @@ bool ExpressionEvaluator::VisitCallExpr(clang::CallExpr *expr) {
 
   auto decl = expr->getDirectCallee();
 
-  if (varContext.isFunctionSet(decl)) {
-    auto &funcType = varContext.getFunctionType(decl);
+  if (globalContext.isFunctionSet(decl)) {
+    auto &funcType = globalContext.getFunctionType(decl);
     setType(expr, funcType.returnType);
   } else {
 
@@ -94,14 +94,14 @@ bool ExpressionEvaluator::VisitCallExpr(clang::CallExpr *expr) {
     for (int i = 0; i < paramCount; i++) {
       auto argType = getType(args[i]);
       paramTypes.push_back(argType);
-      varContext.setVariable(decl->getParamDecl(i), argType);
+      globalContext.setVariable(decl->getParamDecl(i), argType);
     }
 
-    FunctionEvaluator functionEvaluator{context, varContext, decl};
+    FunctionEvaluator functionEvaluator{context, globalContext, decl};
     auto resultType = functionEvaluator.run();
 
     setType(expr, resultType);
-    varContext.setFunctionType(
+    globalContext.setFunctionType(
         decl, {.returnType = resultType, .parameterTypes = paramTypes});
   }
 
@@ -147,8 +147,8 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
       auto refExpr = getLastRefExpr();
       clang::VarDecl *varDecl =
           llvm::dyn_cast<clang::VarDecl>(refExpr->getDecl());
-      PointerType targetType = varContext.getVariableType(varDecl);
-      varContext.setVariable(varDecl, rType);
+      PointerType targetType = globalContext.getVariableType(varDecl);
+      globalContext.setVariable(varDecl, rType);
       setType(op, rType);
       return false;
     }

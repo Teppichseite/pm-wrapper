@@ -1,7 +1,7 @@
 #ifndef EXPRESSION_EVALUATOR_H
 #define EXPRESSION_EVALUATOR_H
 #include "FunctionEvaluator.h"
-#include "VarContext.h"
+#include "GlobalContext.h"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
@@ -19,7 +19,7 @@ class ExpressionEvaluator
 private:
   clang::ASTContext *context;
   clang::Expr *expression;
-  VarContext &varContext;
+  GlobalContext &globalContext;
 
   std::map<clang::Expr *, PointerType> ptrTypes;
   PointerType currentPointerType;
@@ -31,8 +31,8 @@ private:
 
 public:
   explicit ExpressionEvaluator(clang::ASTContext *context,
-                               VarContext &varContext, clang::Expr *expr)
-      : context(context), varContext(varContext), expression(expr){};
+                               GlobalContext &globalContext, clang::Expr *expr)
+      : context(context), globalContext(globalContext), expression(expr){};
   PointerType run();
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitUnaryOperator(clang::UnaryOperator *op);
