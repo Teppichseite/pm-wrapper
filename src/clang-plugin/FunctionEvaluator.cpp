@@ -2,6 +2,7 @@
 #include "ExpressionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
+#include "Util.h"
 #include <algorithm>
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
@@ -14,8 +15,14 @@
 #include <llvm-13/llvm/Support/raw_ostream.h>
 
 PointerType FunctionEvaluator::run() {
-  resultingPointerType = PointerType::NO_PM;
+  resultingPointerType = PointerType::UNKNOWN;
   this->TraverseDecl(functionDecl);
+
+  if (resultingPointerType == PointerType::NULL_PTR) {
+    reportError(context, functionDecl->getBeginLoc(),
+                "Cannot return NULL when pointer type cannot be deduced.");
+  }
+
   return resultingPointerType;
 }
 
@@ -53,15 +60,24 @@ bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
 
 bool FunctionEvaluator::VisitReturnStmt(clang::ReturnStmt *stmt) {
   if (functionDecl->getReturnType()->isVoidType()) {
+    resultingPointerType = PointerType::NO_PM;
     return true;
   }
 
   ExpressionEvaluator evaluator{context, varManager, functionDecl,
                                 stmt->getRetValue()};
-  resultingPointerType = evaluator.run();
+  auto newResultingPointerType = evaluator.run();
 
   if (hasPointerTypeAttribute(functionDecl)) {
     resultingPointerType = getPointerTypeFromAttribute(functionDecl);
+    return true;
   }
+
+  if (newResultingPointerType == PointerType::NULL_PTR &&
+      resultingPointerType != PointerType::UNKNOWN) {
+    return true;
+  }
+
+  resultingPointerType = newResultingPointerType;
   return true;
 }

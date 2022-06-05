@@ -1,11 +1,18 @@
 #define PM __attribute__((pointer_type(1)))
 #include "../../runtime/pm_wrapper.h"
+#include <stdio.h>
 #include <stdlib.h>
 
-int *test(int *ptr) { return ptr; }
+int *test(int i) {
+  if (i == 10) {
+    return NULL;
+  }
+
+  return (int *)pm_get_root();
+}
 
 int main() {
-  test(0);
-  int *(*init)(int *p) = test;
-  int *ptr = init(0);
+  int *v = test(10);
+  v = NULL;
+  return 0;
 }

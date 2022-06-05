@@ -4,8 +4,12 @@
 #include "Types.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclBase.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/Type.h>
+#include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 #include <experimental/filesystem>
+#include <llvm-13/llvm/Support/raw_ostream.h>
 
 PointerType VarManager::getVariableType(clang::VarDecl *decl) {
   return variables[decl];
@@ -29,6 +33,15 @@ void VarManager::setVariable(clang::VarDecl *decl, PointerType type) {
 
 void VarManager::setFunctionType(clang::FunctionDecl *decl, FunctionType type) {
   functions[decl] = type;
+  if (decl->getNameAsString() == "pm_read_object") {
+    pmWrapperReadObjectDecl = decl;
+    return;
+  }
+
+  if (decl->getNameAsString() == "pm_write_object") {
+    pmWrapperWriteObjectDecl = decl;
+    return;
+  }
 }
 
 std::string pointerTypeToString(PointerType type) {
@@ -41,6 +54,8 @@ std::string pointerTypeToString(PointerType type) {
     return "UNDECLARED";
   case UNKNOWN:
     return "UNKNWON";
+  case NULL_PTR:
+    return "NULL";
   }
   return "INVALID TYPE";
 }
@@ -116,3 +131,21 @@ void VarManager::registerVariable(clang::FunctionDecl *funcDecl,
     }
   }
 }
+
+clang::CallExpr *VarManager::CreatePmReadCallExpr(clang::Expr *arg) {
+
+  auto declRef = clang::DeclRefExpr::Create(
+      context, {}, {}, pmWrapperReadObjectDecl, false, clang::SourceLocation{},
+      pmWrapperReadObjectDecl->getType(), clang::ExprValueKind::VK_LValue);
+
+  auto callExpr = clang::CallExpr::Create(
+      context, declRef, {arg}, pmWrapperReadObjectDecl->getReturnType(),
+      clang::ExprValueKind::VK_LValue, {}, {});
+
+  return callExpr;
+};
+
+PointerType VarManager::GetUpdatedPointerType(PointerType oldType,
+                                              PointerType newType) {
+  return PointerType::PM;
+};

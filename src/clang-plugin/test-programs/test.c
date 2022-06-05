@@ -1,4 +1,4 @@
-void *pm_alloc(int size);
-void *pm_read(void *ptr);
 
-int main(int argc, char const *argv[]) { return 0; }
+int test() { return 0; };
+
+int main(int argc, char const *argv[]) { test(); }

@@ -16,6 +16,9 @@ private:
   std::map<clang::FunctionDecl *, FunctionType> functions;
   PluginOptions &options;
 
+  clang::FunctionDecl *pmWrapperReadObjectDecl;
+  clang::FunctionDecl *pmWrapperWriteObjectDecl;
+
 public:
   VarManager(clang::ASTContext &context, PluginOptions &options)
       : context(context), options(options) {}
@@ -34,6 +37,11 @@ public:
   bool isSymbolPartOfSource(clang::Decl *decl);
 
   void registerVariable(clang::FunctionDecl *funcDecl, clang::VarDecl *decl);
+
+  clang::CallExpr *CreatePmReadCallExpr(clang::Expr *ptr);
+
+  static PointerType GetUpdatedPointerType(PointerType oldType,
+                                           PointerType newType);
 };
 
 #endif

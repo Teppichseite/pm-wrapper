@@ -1,10 +1,11 @@
-#define PM_PTR __attribute__((pointer_type(0)))
-
-void *pm_root();
-
-#define NULL 0
-#define int64_t int
-#define size_t int
+#define PM __attribute__((pointer_type(1)))
+#include "../../../src/backends/pmdk_backend.h"
+#include "../../runtime/pm_wrapper.h"
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 struct btree_node {
   int64_t key;
@@ -16,25 +17,25 @@ struct btree {
   struct btree_node *root;
 };
 
-struct btree_node_arg {
-  size_t size;
-  int64_t key;
-  const char *value;
-};
-
+/*
+ * btree_insert -- inserts new element into the tree
+ */
 static void btree_insert(struct btree *btree, int64_t key, const char *value) {
   struct btree_node **dst = &btree->root;
 
-  while (dst != NULL) {
+  while (*dst != NULL) {
     dst = &(*dst)->slots[key > (*dst)->key];
   }
 
-  struct btree_node_arg args;
-  args.size = sizeof(struct btree_node) + 1 + 1;
-  args.key = key;
-  args.value = value;
+  struct btree_node *new_node =
+      (struct btree_node *)pm_alloc(sizeof(struct btree_node *));
+
+  new_node->key = key;
 }
 
+/*
+ * btree_find -- searches for key in the tree
+ */
 static const char *btree_find(struct btree *btree, int64_t key) {
   struct btree_node *node = btree->root;
 
@@ -48,14 +49,55 @@ static const char *btree_find(struct btree *btree, int64_t key) {
   return NULL;
 }
 
+/*
+ * btree_node_print -- prints content of the btree node
+ */
+static void btree_node_print(PM struct btree_node *node) {
+  printf("%" PRIu64 " %s\n", node->key, node->value);
+}
+
+/*
+ * btree_foreach -- invoke callback for every node
+ */
+static void btree_foreach(struct btree *btree, struct btree_node *node,
+                          void (*cb)(struct btree_node *)) {
+  if (node == NULL) {
+    return;
+  }
+
+  btree_foreach(btree, node->slots[0], cb);
+
+  cb(node);
+
+  btree_foreach(btree, node->slots[1], cb);
+}
+
+/*
+ * btree_print -- initiates foreach node print
+ */
+static void btree_print(struct btree *btree) {
+  btree_foreach(btree, btree->root, btree_node_print);
+}
+
 int main(int argc, char *argv[]) {
   if (argc < 3) {
+    printf("usage: %s file-name [p|i|f] [key] [value] \n", argv[0]);
     return 1;
   }
 
   const char *path = argv[1];
 
-  struct btree *tree = (struct btree *)pm_root();
+  PmRegionConfig main_region_config = {.file_path = "./test",
+                                       .root_size = sizeof(struct btree)};
+
+  PmWrapperConfig config = {.backend = &PMDK_BACKEND,
+                            .main_region_config = main_region_config};
+
+  if (pm_init(config) != 0) {
+    return 1;
+  };
+
+  struct btree *btree = (struct btree *)pm_get_root();
 
   const char op = argv[2][0];
   int64_t key;
@@ -63,22 +105,26 @@ int main(int argc, char *argv[]) {
 
   switch (op) {
   case 'p':
+    btree_print(btree);
     break;
   case 'i':
-    key = 2;
+    key = atoll(argv[3]);
     value = argv[4];
-    btree_insert(tree, key, value);
+    btree_insert(btree, key, value);
     break;
   case 'f':
-    key = 2;
-    if ((value = btree_find(tree, key)) != NULL) {
-
-    } else {
-    }
+    key = atoll(argv[3]);
+    if ((value = btree_find(btree, key)) != NULL)
+      printf("%s\n", value);
+    else
+      printf("not found\n");
     break;
   default:
+    printf("invalid operation\n");
     break;
   }
+
+  pm_close();
 
   return 0;
 }

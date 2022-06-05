@@ -17,6 +17,8 @@ public:
     GlobalEvaluator globalEvaluator{ctx, varManager};
     globalEvaluator.run();
     varManager.print();
+
+    // ctx.getTranslationUnitDecl()->print(llvm::outs());
   }
 
 private:

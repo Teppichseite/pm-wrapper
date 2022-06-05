@@ -194,6 +194,8 @@ bool ExpressionEvaluator::VisitUnaryOperator(clang::UnaryOperator *op) {
       return false;
     }
 
+    op->setSubExpr(varManager.CreatePmReadCallExpr(op->getSubExpr()));
+
     auto qualType = op->getType();
     if (!qualType->isPointerType()) {
       setType(op, PointerType::NO_PM);
@@ -214,13 +216,18 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
 
   if (op->getOpcode() == clang::BinaryOperator::Opcode::BO_Assign) {
 
-    if (lType == PointerType::UNDECLARED) {
+    if (lType == PointerType::UNDECLARED || lType == PointerType::NULL_PTR) {
       auto refExpr = getLastRefExpr();
       clang::VarDecl *varDecl =
           llvm::dyn_cast<clang::VarDecl>(refExpr->getDecl());
       PointerType targetType = varManager.getVariableType(varDecl);
       varManager.setVariable(varDecl, rType);
       setType(op, rType);
+      return false;
+    }
+
+    if (rType == NULL_PTR) {
+      setType(op, lType);
       return false;
     }
 
@@ -260,6 +267,12 @@ bool ExpressionEvaluator::VisitCharacterLiteral(
 };
 
 bool ExpressionEvaluator::VisitCastExpr(clang::CastExpr *expr) {
+
+  if (expr->getCastKind() == clang::CastKind::CK_NullToPointer) {
+    setType(expr, PointerType::NULL_PTR);
+    return false;
+  }
+
   auto qualType = expr->getType();
   auto subPointerType = getType(expr->getSubExpr());
 
@@ -312,7 +325,7 @@ bool ExpressionEvaluator::VisitMemberExpr(clang::MemberExpr *expr) {
   auto qualType = expr->getType();
 
   if (pointerType == PointerType::PM) {
-    if (qualType->isPointerType()) {
+    if (qualType->isPointerType() || qualType->isArrayType()) {
       setType(expr, PointerType::PM);
       return false;
     }
