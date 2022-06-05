@@ -8,14 +8,18 @@ struct PluginOptions {
   std::string sourcePath;
 };
 
-class GlobalContext {
+class VarManager {
 
 private:
+  clang::ASTContext &context;
   std::map<clang::VarDecl *, PointerType> variables;
   std::map<clang::FunctionDecl *, FunctionType> functions;
-  PluginOptions options;
+  PluginOptions &options;
 
 public:
+  VarManager(clang::ASTContext &context, PluginOptions &options)
+      : context(context), options(options) {}
+
   PointerType getVariableType(clang::VarDecl *decl);
   FunctionType &getFunctionType(clang::FunctionDecl *decl);
 
@@ -25,9 +29,11 @@ public:
   void setVariable(clang::VarDecl *decl, PointerType type);
   void setFunctionType(clang::FunctionDecl *decl, FunctionType type);
 
-  void printContext();
+  void print();
 
-  bool isSymoblPartOfSource(clang::DeclRefExpr expr);
+  bool isSymbolPartOfSource(clang::Decl *decl);
+
+  void registerVariable(clang::FunctionDecl *funcDecl, clang::VarDecl *decl);
 };
 
 #endif

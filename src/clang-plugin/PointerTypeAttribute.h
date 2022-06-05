@@ -18,7 +18,6 @@ public:
   AttrHandling
   handleDeclAttribute(clang::Sema &s, clang::Decl *decl,
                       const clang::ParsedAttr &attr) const override {
-
     // TODO: Check that arg is a integer literal
     std::vector<clang::Expr *> args = {attr.getArgAsExpr(0)};
     decl->addAttr(clang::AnnotateAttr::Create(

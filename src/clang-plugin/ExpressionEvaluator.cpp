@@ -1,10 +1,13 @@
 #include "ExpressionEvaluator.h"
 #include "FunctionEvaluator.h"
+#include "PointerTypeAttribute.h"
 #include "Types.h"
 #include "Util.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
 #include <clang/AST/OperationKinds.h>
+#include <clang/AST/Type.h>
+#include <clang/Basic/AttrKinds.h>
 #include <llvm-13/llvm/Support/Casting.h>
 #include <llvm-13/llvm/Support/raw_ostream.h>
 #include <vector>
@@ -67,43 +70,88 @@ clang::DeclRefExpr *ExpressionEvaluator::getLastRefExpr() {
 }
 
 bool ExpressionEvaluator::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
+
   if (expr->getDecl()->getType()->isFunctionType()) {
     setType(expr, PointerType::NO_PM);
     return false;
   }
 
   clang::VarDecl *varDecl = llvm::dyn_cast<clang::VarDecl>(expr->getDecl());
-  setType(expr, globalContext.getVariableType(varDecl));
+  if (!varDecl) {
+    return false;
+  }
 
+  if (!varManager.isSymbolPartOfSource(varDecl)) {
+    setType(expr, PointerType::NO_PM);
+    return false;
+  }
+
+  setType(expr, varManager.getVariableType(varDecl));
   return false;
 }
 
 bool ExpressionEvaluator::VisitCallExpr(clang::CallExpr *expr) {
 
   auto decl = expr->getDirectCallee();
+  if (decl == nullptr) {
+    setType(expr, PointerType::UNKNOWN);
+    return false;
+  }
 
-  if (globalContext.isFunctionSet(decl)) {
-    auto &funcType = globalContext.getFunctionType(decl);
+  if (varManager.isFunctionSet(decl)) {
+    auto &funcType = varManager.getFunctionType(decl);
     setType(expr, funcType.returnType);
-  } else {
+    return false;
+  }
 
-    auto args = expr->getArgs();
+  if (!varManager.isSymbolPartOfSource(decl)) {
+    setType(expr, PointerType::NO_PM);
+    return false;
+  }
 
-    std::vector<PointerType> paramTypes;
-    auto paramCount = decl->getNumParams();
-    for (int i = 0; i < paramCount; i++) {
-      auto argType = getType(args[i]);
-      paramTypes.push_back(argType);
-      globalContext.setVariable(decl->getParamDecl(i), argType);
+  if (decl == function) {
+    if (!decl->getReturnType()->isPointerType()) {
+      setType(expr, PointerType::NO_PM);
+      return false;
     }
 
-    FunctionEvaluator functionEvaluator{context, globalContext, decl};
-    auto resultType = functionEvaluator.run();
+    if (!hasPointerTypeAttribute(decl)) {
+      reportError(
+          context, decl->getBeginLoc(),
+          "Recursive functions which return a pointer type are required to "
+          "have a pointer type attribute specified");
+      return false;
+    }
 
-    setType(expr, resultType);
-    globalContext.setFunctionType(
-        decl, {.returnType = resultType, .parameterTypes = paramTypes});
+    setType(expr, getPointerTypeFromAttribute(decl));
+    return false;
   }
+
+  auto args = expr->getArgs();
+  std::vector<PointerType> paramTypes;
+  auto paramCount = decl->getNumParams();
+  for (int i = 0; i < paramCount; i++) {
+    auto argType = getType(args[i]);
+    paramTypes.push_back(argType);
+
+    auto paramDecl = decl->getParamDecl(i);
+    if (hasPointerTypeAttribute(paramDecl)) {
+      auto alreadyDeclaredType = getPointerTypeFromAttribute(paramDecl);
+      if (alreadyDeclaredType != argType) {
+        reportError(context, args[i]->getBeginLoc(),
+                    "Declared function parameter pointer type does not match "
+                    "pointer type of argument");
+      }
+    }
+    varManager.setVariable(decl->getParamDecl(i), argType);
+  }
+
+  FunctionEvaluator functionEvaluator{context, varManager, decl};
+  auto resultType = functionEvaluator.run();
+
+  setType(expr, resultType);
+  varManager.setFunctionType(
+      decl, {.returnType = resultType, .parameterTypes = paramTypes});
 
   return false;
 }
@@ -111,7 +159,30 @@ bool ExpressionEvaluator::VisitCallExpr(clang::CallExpr *expr) {
 bool ExpressionEvaluator::VisitUnaryOperator(clang::UnaryOperator *op) {
 
   if (op->getOpcode() == clang::UnaryOperator::Opcode::UO_AddrOf) {
-    auto qualType = op->getSubExpr();
+
+    auto memberExpr = llvm::dyn_cast<clang::MemberExpr>(op->getSubExpr());
+    if (memberExpr) {
+      if (getType(memberExpr->getBase()) == PointerType::PM) {
+        setType(op, PointerType::PM);
+        return false;
+      }
+
+      setType(op, PointerType::NO_PM);
+      return false;
+    }
+
+    auto arraySubsExpr =
+        llvm::dyn_cast<clang::ArraySubscriptExpr>(op->getSubExpr());
+    if (arraySubsExpr) {
+      if (getType(arraySubsExpr->getLHS()) == PointerType::PM) {
+        setType(op, PointerType::PM);
+        return false;
+      }
+
+      setType(op, PointerType::NO_PM);
+      return false;
+    }
+
     setType(op, PointerType::NO_PM);
     return false;
   }
@@ -147,8 +218,8 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
       auto refExpr = getLastRefExpr();
       clang::VarDecl *varDecl =
           llvm::dyn_cast<clang::VarDecl>(refExpr->getDecl());
-      PointerType targetType = globalContext.getVariableType(varDecl);
-      globalContext.setVariable(varDecl, rType);
+      PointerType targetType = varManager.getVariableType(varDecl);
+      varManager.setVariable(varDecl, rType);
       setType(op, rType);
       return false;
     }
@@ -236,6 +307,26 @@ bool ExpressionEvaluator::VisitInitListExpr(clang::InitListExpr *expr) {
 };
 
 bool ExpressionEvaluator::VisitMemberExpr(clang::MemberExpr *expr) {
+
+  auto pointerType = getType(expr->getBase());
+  auto qualType = expr->getType();
+
+  if (pointerType == PointerType::PM) {
+    if (qualType->isPointerType()) {
+      setType(expr, PointerType::PM);
+      return false;
+    }
+
+    setType(expr, PointerType::NO_PM);
+    return false;
+  }
+
+  if (qualType->isPointerType()) {
+    reportWarning(context, expr->getBeginLoc(),
+                  "Assumed VM pointer for this variable. Use the Pointer Type "
+                  "Attribute in case it is incorrect.");
+  }
+
   setType(expr, getType(expr->getBase()));
   return false;
 }

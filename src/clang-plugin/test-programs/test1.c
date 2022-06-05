@@ -1,12 +1,11 @@
 #define PM __attribute__((pointer_type(1)))
+#include "../../runtime/pm_wrapper.h"
+#include <stdlib.h>
 
-void *pm_root();
-
-struct test {
-  int a;
-};
+int *test(int *ptr) { return ptr; }
 
 int main() {
-  int *array[1] = {0};
-  PM int *ptr = array[0];
+  test(0);
+  int *(*init)(int *p) = test;
+  int *ptr = init(0);
 }

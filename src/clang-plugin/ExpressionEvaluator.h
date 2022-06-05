@@ -1,7 +1,7 @@
 #ifndef EXPRESSION_EVALUATOR_H
 #define EXPRESSION_EVALUATOR_H
 #include "FunctionEvaluator.h"
-#include "GlobalContext.h"
+#include "VarManager.h"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
@@ -17,9 +17,10 @@ class ExpressionEvaluator
     : public clang::RecursiveASTVisitor<ExpressionEvaluator> {
 
 private:
-  clang::ASTContext *context;
+  clang::ASTContext &context;
+  VarManager &varManager;
+  clang::FunctionDecl *function;
   clang::Expr *expression;
-  GlobalContext &globalContext;
 
   std::map<clang::Expr *, PointerType> ptrTypes;
   PointerType currentPointerType;
@@ -30,9 +31,11 @@ private:
   clang::DeclRefExpr *getLastRefExpr();
 
 public:
-  explicit ExpressionEvaluator(clang::ASTContext *context,
-                               GlobalContext &globalContext, clang::Expr *expr)
-      : context(context), globalContext(globalContext), expression(expr){};
+  explicit ExpressionEvaluator(clang::ASTContext &context,
+                               VarManager &varManager,
+                               clang::FunctionDecl *function, clang::Expr *expr)
+      : context(context), varManager(varManager), function(function),
+        expression(expr){};
   PointerType run();
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitUnaryOperator(clang::UnaryOperator *op);

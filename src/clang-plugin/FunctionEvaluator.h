@@ -1,7 +1,7 @@
 #ifndef FUNCTION_EVALUATOR_H
 #define FUNCTION_EVALUATOR_H
 #include "Types.h"
-#include "GlobalContext.h"
+#include "VarManager.h"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
@@ -10,15 +10,15 @@
 class FunctionEvaluator : public clang::RecursiveASTVisitor<FunctionEvaluator> {
 
 private:
-  clang::ASTContext *context;
+  clang::ASTContext &context;
+  VarManager &varManager;
   clang::FunctionDecl *functionDecl;
-  GlobalContext &globalContext;
   PointerType resultingPointerType;
 
 public:
-  explicit FunctionEvaluator(clang::ASTContext *context, GlobalContext &globalContext,
+  explicit FunctionEvaluator(clang::ASTContext &context, VarManager &varManager,
                              clang::FunctionDecl *decl)
-      : context(context), globalContext(globalContext), functionDecl(decl){};
+      : context(context), varManager(varManager), functionDecl(decl){};
   PointerType run();
   bool VisitVarDecl(clang::VarDecl *decl);
   bool VisitExpr(clang::Expr *expr);

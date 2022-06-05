@@ -20,31 +20,15 @@ PointerType FunctionEvaluator::run() {
 }
 
 bool FunctionEvaluator::VisitVarDecl(clang::VarDecl *decl) {
-
   if (llvm::isa<clang::ParmVarDecl>(decl)) {
     return true;
   }
-
-  if (hasPointerTypeAttribute(decl)) {
-    globalContext.setVariable(decl, getPointerTypeFromAttribute(decl));
-  } else {
-    globalContext.setVariable(decl, PointerType::UNDECLARED);
-  }
-
-  if (decl->hasInit()) {
-    ExpressionEvaluator evaluator{context, globalContext, decl->getInit()};
-    auto type = evaluator.run();
-    if (!hasPointerTypeAttribute(decl)) {
-      globalContext.setVariable(decl, type);
-    }
-    return true;
-  }
-
+  varManager.registerVariable(functionDecl, decl);
   return true;
 }
 
 bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
-  const auto &parents = context->getParents(*expr);
+  const auto &parents = context.getParents(*expr);
 
   if (parents.size() <= 0) {
     return true;
@@ -60,7 +44,7 @@ bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
   };
 
   if (!llvm::isa<clang::Expr>(stmt)) {
-    ExpressionEvaluator evaluator{context, globalContext, expr};
+    ExpressionEvaluator evaluator{context, varManager, functionDecl, expr};
     evaluator.run();
   }
 
@@ -72,7 +56,8 @@ bool FunctionEvaluator::VisitReturnStmt(clang::ReturnStmt *stmt) {
     return true;
   }
 
-  ExpressionEvaluator evaluator{context, globalContext, stmt->getRetValue()};
+  ExpressionEvaluator evaluator{context, varManager, functionDecl,
+                                stmt->getRetValue()};
   resultingPointerType = evaluator.run();
 
   if (hasPointerTypeAttribute(functionDecl)) {

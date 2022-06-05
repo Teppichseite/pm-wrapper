@@ -3,12 +3,19 @@
 #include "FunctionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
+#include "Util.h"
+#include "VarManager.h"
+#include <clang/AST/Decl.h>
+#include <llvm-13/llvm/Support/Casting.h>
+#include <llvm-13/llvm/Support/raw_ostream.h>
+#include <memory>
 #include <vector>
 
-GlobalEvaluator::GlobalEvaluator(clang::ASTContext *ctx) : context{ctx} {
+GlobalEvaluator::GlobalEvaluator(clang::ASTContext &ctx, VarManager &manager)
+    : context{ctx}, varManager(manager) {
   pmWrapperFunctionTypes = {
-      {"pm_root", {.returnType = PointerType::PM, .parameterTypes = {}}},
-      {"pm_root_reg",
+      {"pm_get_root", {.returnType = PointerType::PM, .parameterTypes = {}}},
+      {"pm_get_root_reg",
        {.returnType = PointerType::PM, .parameterTypes = {PointerType::NO_PM}}},
       {"pm_alloc",
        {.returnType = PointerType::PM, .parameterTypes = {PointerType::NO_PM}}},
@@ -26,18 +33,78 @@ GlobalEvaluator::GlobalEvaluator(clang::ASTContext *ctx) : context{ctx} {
 }
 
 void GlobalEvaluator::run() {
-  this->TraverseDecl(context->getTranslationUnitDecl());
-
+  this->TraverseDecl(context.getTranslationUnitDecl());
   std::vector<PointerType> paramTypes;
   for (int i = 0; i < mainFunction->getNumParams(); i++) {
     paramTypes.push_back(PointerType::NO_PM);
-    globalContext.setVariable(mainFunction->getParamDecl(i), PointerType::NO_PM);
+    varManager.setVariable(mainFunction->getParamDecl(i), PointerType::NO_PM);
   }
-  globalContext.setFunctionType(mainFunction, {.returnType = PointerType::NO_PM,
+  varManager.setFunctionType(mainFunction, {.returnType = PointerType::NO_PM,
                                             .parameterTypes = paramTypes});
-  FunctionEvaluator functionEvaluator{context, globalContext, mainFunction};
+
+  FunctionEvaluator functionEvaluator{context, varManager, mainFunction};
   functionEvaluator.run();
-  globalContext.printContext();
+
+  evaluateUncalledFunctions();
+}
+
+void GlobalEvaluator::evaluateUncalledFunctions() {
+
+  for (auto pair : functionRefCounts) {
+    auto decl = pair.first;
+    auto count = pair.second;
+    if (count.callCount <= 0) {
+      if (varManager.isFunctionSet(decl)) {
+        continue;
+      }
+
+      uncalledFunctions.push(decl);
+    }
+  }
+
+  while (!uncalledFunctions.empty()) {
+    auto uncalledFunc = uncalledFunctions.top();
+    uncalledFunctions.pop();
+
+    llvm::outs() << uncalledFunc->getNameAsString() << "\n";
+
+    if (!hasPointerTypeAttribute(uncalledFunc) &&
+        uncalledFunc->getReturnType()->isPointerType()) {
+      reportError(context, uncalledFunc->getBeginLoc(),
+                  "Please specify the pointer type for the return value for "
+                  "dynamically called functions");
+    }
+
+    std::vector<PointerType> uncalledFunParamTypes;
+    for (int i = 0; i < uncalledFunc->getNumParams(); i++) {
+
+      auto paramDecl = uncalledFunc->getParamDecl(i);
+      if (!hasPointerTypeAttribute(paramDecl) &&
+          paramDecl->getType()->isPointerType()) {
+        reportError(context, paramDecl->getBeginLoc(),
+                    "Please specify the pointer type for a parameter for "
+                    "dynamically called functions");
+        continue;
+      }
+
+      auto paramType = paramDecl->getType()->isPointerType()
+                           ? getPointerTypeFromAttribute(paramDecl)
+                           : PointerType::NO_PM;
+      uncalledFunParamTypes.push_back(paramType);
+      varManager.setVariable(paramDecl, paramType);
+    }
+
+    auto uncalledFuncType = uncalledFunc->getReturnType()->isPointerType()
+                                ? getPointerTypeFromAttribute(uncalledFunc)
+                                : PointerType::NO_PM;
+
+    varManager.setFunctionType(uncalledFunc,
+                               {.returnType = uncalledFuncType,
+                                .parameterTypes = uncalledFunParamTypes});
+
+    FunctionEvaluator functionEvaluator{context, varManager, uncalledFunc};
+    functionEvaluator.run();
+  }
 }
 
 bool GlobalEvaluator::VisitFunctionDecl(clang::FunctionDecl *fd) {
@@ -49,7 +116,7 @@ bool GlobalEvaluator::VisitFunctionDecl(clang::FunctionDecl *fd) {
 
   auto funcName = fd->getNameAsString();
   if (pmWrapperFunctionTypes.find(funcName) != pmWrapperFunctionTypes.end()) {
-    globalContext.setFunctionType(fd, pmWrapperFunctionTypes[funcName]);
+    varManager.setFunctionType(fd, pmWrapperFunctionTypes[funcName]);
     return true;
   }
 
@@ -57,25 +124,45 @@ bool GlobalEvaluator::VisitFunctionDecl(clang::FunctionDecl *fd) {
 }
 
 bool GlobalEvaluator::VisitVarDecl(clang::VarDecl *decl) {
-
   if (decl->isLocalVarDeclOrParm()) {
     return true;
   }
+  varManager.registerVariable(nullptr, decl);
+  return true;
+}
 
-  if (hasPointerTypeAttribute(decl)) {
-    globalContext.setVariable(decl, getPointerTypeFromAttribute(decl));
-  } else {
-    globalContext.setVariable(decl, PointerType::UNDECLARED);
-  }
+bool GlobalEvaluator::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
 
-  if (decl->hasInit()) {
-    ExpressionEvaluator evaluator{context, globalContext, decl->getInit()};
-    auto type = evaluator.run();
-    if (!hasPointerTypeAttribute(decl)) {
-      globalContext.setVariable(decl, type);
-    }
+  if (!expr->getDecl()->getType()->isFunctionType()) {
     return true;
   }
+
+  if (!varManager.isSymbolPartOfSource(expr->getDecl())) {
+    return true;
+  }
+
+  auto functionDecl = llvm::dyn_cast<clang::FunctionDecl>(expr->getDecl());
+  if (!functionDecl) {
+    return true;
+  }
+
+  functionRefCounts[functionDecl].refCount++;
+
+  return true;
+}
+
+bool GlobalEvaluator::VisitCallExpr(clang::CallExpr *expr) {
+
+  auto decl = expr->getDirectCallee();
+  if (decl == nullptr) {
+    return true;
+  }
+
+  if (!varManager.isSymbolPartOfSource(decl)) {
+    return true;
+  }
+
+  functionRefCounts[decl].callCount++;
 
   return true;
 }

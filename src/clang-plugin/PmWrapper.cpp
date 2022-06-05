@@ -1,31 +1,26 @@
 #include "GlobalEvaluator.h"
 #include "PointerTypeAttribute.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Basic/FileManager.h"
+#include "VarManager.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/Support/raw_ostream.h"
-#include <clang/Rewrite/Core/Rewriter.h>
-#include <clang/Sema/Sema.h>
+#include <llvm-13/llvm/Support/raw_ostream.h>
 #include <memory>
 #include <vector>
 
-using namespace clang;
-
 class PmWrapperASTConsumer : public clang::ASTConsumer {
 public:
-  explicit PmWrapperASTConsumer(ASTContext *Ctx, Rewriter &rewriter)
-      : rewriter(rewriter) {}
+  explicit PmWrapperASTConsumer(clang::ASTContext *ctx, PluginOptions &options)
+      : options(options) {}
 
-  void HandleTranslationUnit(clang::ASTContext &Ctx) override {
-    GlobalEvaluator globalEvaluator{&Ctx};
+  void HandleTranslationUnit(clang::ASTContext &ctx) override {
+    VarManager varManager{ctx, options};
+    GlobalEvaluator globalEvaluator{ctx, varManager};
     globalEvaluator.run();
+    varManager.print();
   }
 
 private:
-  Rewriter &rewriter;
+  PluginOptions &options;
 };
 
 class PmWrapperAction : public clang::PluginASTAction {
@@ -33,25 +28,30 @@ public:
   std::unique_ptr<clang::ASTConsumer>
   CreateASTConsumer(clang::CompilerInstance &Compiler,
                     llvm::StringRef InFile) override {
-
-    rewriter.setSourceMgr(Compiler.getSourceManager(), Compiler.getLangOpts());
     return std::unique_ptr<clang::ASTConsumer>(
         std::make_unique<PmWrapperASTConsumer>(&Compiler.getASTContext(),
-                                               rewriter));
+                                               options));
   }
 
-  bool ParseArgs(const CompilerInstance &CI,
+  bool ParseArgs(const clang::CompilerInstance &CI,
                  const std::vector<std::string> &args) override {
 
+    if (args.size() < 2) {
+      return false;
+    }
+
+    if (args[0] == "-source-path") {
+      options.sourcePath = args[1];
+    }
     return true;
   }
 
 private:
-  Rewriter rewriter;
+  PluginOptions options;
 };
 
-static ParsedAttrInfoRegistry::Add<PointerTypeAttribute>
+static clang::ParsedAttrInfoRegistry::Add<PointerTypeAttribute>
     Z("pointer-type-attribute", "Pointer type attribute");
-static FrontendPluginRegistry::Add<PmWrapperAction>
+static clang::FrontendPluginRegistry::Add<PmWrapperAction>
     X("pm-wrapper-clang-plugin",
       /*Description=*/"The PmWrapper plugin");

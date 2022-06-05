@@ -37,4 +37,4 @@ add_library(PmWrapperClangPlugin SHARED ${SOURCES})
 # Allow undefined symbols in shared objects on Darwin (this is the default
 # behaviour on Linux)
 target_link_libraries(PmWrapperClangPlugin
-  "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
+  "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>" "stdc++fs")
