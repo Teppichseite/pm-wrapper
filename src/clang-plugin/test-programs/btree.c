@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #define PM __attribute__((pointer_type(1)))
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
@@ -22,6 +23,9 @@ struct btree {
  */
 static void btree_insert(struct btree *btree, int64_t key, const char *value) {
   struct btree_node **dst = &btree->root;
+
+  struct btree_node *d = *dst;
+  struct btree_node **n = &d->slots[0];
 
   while (*dst != NULL) {
     dst = &(*dst)->slots[key > (*dst)->key];
@@ -114,8 +118,9 @@ int main(int argc, char *argv[]) {
     break;
   case 'f':
     key = atoll(argv[3]);
-    if ((value = btree_find(btree, key)) != NULL)
-      printf("%s\n", value);
+    const char *found_value;
+    if ((found_value = btree_find(btree, key)) != NULL)
+      printf("%s\n", found_value);
     else
       printf("not found\n");
     break;

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int *p;
+
 int *test(int i) {
   if (i == 10) {
     return NULL;
@@ -13,6 +15,7 @@ int *test(int i) {
 
 int main() {
   int *v = test(10);
-  v = NULL;
+  int *k = v;
+  p = k;
   return 0;
 }

@@ -1,8 +1,11 @@
 #ifndef VAR_CONTEXT_H
 #define VAR_CONTEXT_H
 #include "Types.h"
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
+#include <clang/Basic/SourceLocation.h>
+#include <string>
 
 struct PluginOptions {
   std::string sourcePath;
@@ -32,6 +35,7 @@ public:
   void setVariable(clang::VarDecl *decl, PointerType type);
   void setFunctionType(clang::FunctionDecl *decl, FunctionType type);
 
+  void printPretty();
   void print();
 
   bool isSymbolPartOfSource(clang::Decl *decl);
@@ -42,6 +46,12 @@ public:
 
   static PointerType GetUpdatedPointerType(PointerType oldType,
                                            PointerType newType);
+
+  void reportDiagnostic(clang::DiagnosticsEngine::Level level,
+                        clang::SourceRange range, std::string message);
+
+  void reportError(clang::SourceRange range, std::string message);
+  void reportWarning(clang::SourceRange range, std::string message);
 };
 
 #endif

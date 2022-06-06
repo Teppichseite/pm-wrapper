@@ -5,3 +5,6 @@
 /src/clang-plugin/build
 /src/clang-plugin/.cache
 /src/clang-plugin/.vscode
+
+/src/vscode-extension/node_modules/
+/src/vscode-extension/out/

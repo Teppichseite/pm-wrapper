@@ -2,7 +2,6 @@
 #include "ExpressionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
-#include "Util.h"
 #include <algorithm>
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
@@ -19,8 +18,9 @@ PointerType FunctionEvaluator::run() {
   this->TraverseDecl(functionDecl);
 
   if (resultingPointerType == PointerType::NULL_PTR) {
-    reportError(context, functionDecl->getBeginLoc(),
-                "Cannot return NULL when pointer type cannot be deduced.");
+    varManager.reportError(
+        functionDecl->getSourceRange(),
+        "Cannot return NULL when pointer type cannot be deduced.");
   }
 
   return resultingPointerType;

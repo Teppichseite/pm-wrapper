@@ -3,7 +3,6 @@
 #include "FunctionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
-#include "Util.h"
 #include "VarManager.h"
 #include <clang/AST/Decl.h>
 #include <llvm-13/llvm/Support/Casting.h>
@@ -70,9 +69,10 @@ void GlobalEvaluator::evaluateUncalledFunctions() {
 
     if (!hasPointerTypeAttribute(uncalledFunc) &&
         uncalledFunc->getReturnType()->isPointerType()) {
-      reportError(context, uncalledFunc->getBeginLoc(),
-                  "Please specify the pointer type for the return value for "
-                  "dynamically called functions");
+      varManager.reportError(
+          uncalledFunc->getSourceRange(),
+          "Please specify the pointer type for the return value for "
+          "dynamically called functions");
     }
 
     std::vector<PointerType> uncalledFunParamTypes;
@@ -81,9 +81,10 @@ void GlobalEvaluator::evaluateUncalledFunctions() {
       auto paramDecl = uncalledFunc->getParamDecl(i);
       if (!hasPointerTypeAttribute(paramDecl) &&
           paramDecl->getType()->isPointerType()) {
-        reportError(context, paramDecl->getBeginLoc(),
-                    "Please specify the pointer type for a parameter for "
-                    "dynamically called functions");
+        varManager.reportError(
+            paramDecl->getSourceRange(),
+            "Please specify the pointer type for a parameter for "
+            "dynamically called functions");
         continue;
       }
 

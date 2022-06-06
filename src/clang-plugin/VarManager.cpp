@@ -2,14 +2,18 @@
 #include "ExpressionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/Expr.h>
 #include <clang/AST/Type.h>
+#include <clang/Basic/DarwinSDKInfo.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 #include <experimental/filesystem>
+#include <llvm-13/llvm/Support/JSON.h>
 #include <llvm-13/llvm/Support/raw_ostream.h>
+#include <string>
 
 PointerType VarManager::getVariableType(clang::VarDecl *decl) {
   return variables[decl];
@@ -60,7 +64,22 @@ std::string pointerTypeToString(PointerType type) {
   return "INVALID TYPE";
 }
 
-void VarManager::print() {
+std::string diagnosticLevelToString(clang::DiagnosticsEngine::Level level) {
+  switch (level) {
+  case clang::DiagnosticsEngine::Warning:
+    return "WARNGING";
+  case clang::DiagnosticsEngine::Error:
+    return "ERROR";
+  case clang::DiagnosticsEngine::Ignored:
+  case clang::DiagnosticsEngine::Note:
+  case clang::DiagnosticsEngine::Remark:
+  case clang::DiagnosticsEngine::Fatal:
+    return "OTHER";
+    break;
+  }
+}
+
+void VarManager::printPretty() {
   llvm::outs() << "\nOptions: \n";
   llvm::outs() << "Source path: " << options.sourcePath << "\n\n";
 
@@ -86,6 +105,55 @@ void VarManager::print() {
   }
   llvm::outs() << "\n";
 }
+
+void printSymbolLocation(clang::ASTContext &context, clang::SourceLocation loc,
+                         PointerType type) {
+  auto &manager = context.getSourceManager();
+  auto fileId = manager.getFileID(loc);
+  auto filePath =
+      std::experimental::filesystem::canonical(manager.getFilename(loc).str());
+  auto line = manager.getLineNumber(fileId, manager.getFileOffset(loc));
+  auto column = manager.getColumnNumber(fileId, manager.getFileOffset(loc));
+  llvm::outs() << "PM_SYMBOL_TYPE_LOC"
+               << ";" << filePath << ";" << line << "," << column << ";"
+               << pointerTypeToString(type) << "\n";
+}
+
+void printDiagnosticLocation(clang::ASTContext &context,
+                             clang::SourceRange range,
+                             clang::DiagnosticsEngine::Level level,
+                             std::string message) {
+  auto &manager = context.getSourceManager();
+  auto fileId = manager.getFileID(range.getBegin());
+  auto filePath = std::experimental::filesystem::canonical(
+      manager.getFilename(range.getBegin()).str());
+  auto line1 =
+      manager.getLineNumber(fileId, manager.getFileOffset(range.getBegin()));
+  auto column1 =
+      manager.getColumnNumber(fileId, manager.getFileOffset(range.getBegin()));
+  auto line2 =
+      manager.getLineNumber(fileId, manager.getFileOffset(range.getEnd()));
+  auto column2 =
+      manager.getColumnNumber(fileId, manager.getFileOffset(range.getEnd()));
+  llvm::outs() << "PM_DIAGNOSTIC_LOC"
+               << ";" << filePath << ";" << line1 << "," << column1 << ";"
+               << line2 << "," << column2 << ";"
+               << diagnosticLevelToString(level) << ";" << message << "\n";
+}
+
+void VarManager::print() {
+  for (auto entry : variables) {
+    auto decl = entry.first;
+    auto type = entry.second;
+    printSymbolLocation(context, decl->getBeginLoc(), type);
+  }
+
+  for (auto e : functions) {
+    auto decl = e.first;
+    auto &type = e.second;
+    printSymbolLocation(context, decl->getBeginLoc(), type.returnType);
+  }
+};
 
 using path = std::experimental::filesystem::path;
 
@@ -149,3 +217,23 @@ PointerType VarManager::GetUpdatedPointerType(PointerType oldType,
                                               PointerType newType) {
   return PointerType::PM;
 };
+
+void VarManager::reportDiagnostic(clang::DiagnosticsEngine::Level level,
+                                  clang::SourceRange range,
+                                  std::string message) {
+  auto &de = context.getDiagnostics();
+  auto &ids = de.getDiagnosticIDs();
+  auto id = ids->getCustomDiagID(
+      static_cast<clang::DiagnosticIDs::Level>(level), message);
+  de.Report(range.getBegin(), id)
+      .AddSourceRange(clang::CharSourceRange::getCharRange(range));
+  printDiagnosticLocation(context, range, level, message);
+}
+
+void VarManager::reportError(clang::SourceRange range, std::string message) {
+  reportDiagnostic(clang::DiagnosticsEngine::Level::Error, range, message);
+}
+
+void VarManager::reportWarning(clang::SourceRange range, std::string message) {
+  reportDiagnostic(clang::DiagnosticsEngine::Level::Warning, range, message);
+}

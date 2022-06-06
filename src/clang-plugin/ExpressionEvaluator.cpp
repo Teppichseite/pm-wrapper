@@ -2,7 +2,6 @@
 #include "FunctionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
-#include "Util.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
 #include <clang/AST/OperationKinds.h>
@@ -116,8 +115,8 @@ bool ExpressionEvaluator::VisitCallExpr(clang::CallExpr *expr) {
     }
 
     if (!hasPointerTypeAttribute(decl)) {
-      reportError(
-          context, decl->getBeginLoc(),
+      varManager.reportError(
+          decl->getSourceRange(),
           "Recursive functions which return a pointer type are required to "
           "have a pointer type attribute specified");
       return false;
@@ -138,9 +137,10 @@ bool ExpressionEvaluator::VisitCallExpr(clang::CallExpr *expr) {
     if (hasPointerTypeAttribute(paramDecl)) {
       auto alreadyDeclaredType = getPointerTypeFromAttribute(paramDecl);
       if (alreadyDeclaredType != argType) {
-        reportError(context, args[i]->getBeginLoc(),
-                    "Declared function parameter pointer type does not match "
-                    "pointer type of argument");
+        varManager.reportError(
+            args[i]->getSourceRange(),
+            "Declared function parameter pointer type does not match "
+            "pointer type of argument");
       }
     }
     varManager.setVariable(decl->getParamDecl(i), argType);
@@ -232,9 +232,10 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
     }
 
     if (lType != rType) {
-      reportError(context, op->getOperatorLoc(),
-                  "Left hand side pointer type does not match right hand side "
-                  "pointer type");
+      varManager.reportError(
+          op->getSourceRange(),
+          "Left hand side pointer type does not match right hand side "
+          "pointer type");
       setType(op, lType);
       return false;
     }
@@ -278,8 +279,8 @@ bool ExpressionEvaluator::VisitCastExpr(clang::CastExpr *expr) {
 
   if (subPointerType == PointerType::PM && !qualType->isPointerType()) {
     setType(expr, PointerType::NO_PM);
-    reportWarning(
-        context, expr->getBeginLoc(),
+    varManager.reportWarning(
+        expr->getSourceRange(),
         "Casting a PM pointer to a non pointer value should be avoided");
     return false;
   }
@@ -305,9 +306,10 @@ bool ExpressionEvaluator::VisitArraySubscriptExpr(
   }
 
   if (qualType->isPointerType()) {
-    reportWarning(context, expr->getBeginLoc(),
-                  "Assumed VM pointer for this variable. Use the Pointer Type "
-                  "Attribute in case it is incorrect.");
+    varManager.reportWarning(
+        expr->getSourceRange(),
+        "Assumed VM pointer for this variable. Use the Pointer Type "
+        "Attribute in case it is incorrect.");
   }
 
   setType(expr, getType(expr->getLHS()));
@@ -335,11 +337,17 @@ bool ExpressionEvaluator::VisitMemberExpr(clang::MemberExpr *expr) {
   }
 
   if (qualType->isPointerType()) {
-    reportWarning(context, expr->getBeginLoc(),
-                  "Assumed VM pointer for this variable. Use the Pointer Type "
-                  "Attribute in case it is incorrect.");
+    varManager.reportWarning(
+        expr->getSourceRange(),
+        "Assumed VM pointer for this variable. Use the Pointer Type "
+        "Attribute in case it is incorrect.");
   }
 
   setType(expr, getType(expr->getBase()));
+  return false;
+}
+
+bool ExpressionEvaluator::VisitParenExpr(clang::ParenExpr *expr) {
+  setType(expr, getType(expr->getSubExpr()));
   return false;
 }

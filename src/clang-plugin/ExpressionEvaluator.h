@@ -49,6 +49,7 @@ public:
   bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr);
   bool VisitInitListExpr(clang::InitListExpr *expr);
   bool VisitMemberExpr(clang::MemberExpr *expr);
+  bool VisitParenExpr(clang::ParenExpr *expr);
 };
 
 #endif
