@@ -5,6 +5,7 @@
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
 #include <clang/Basic/SourceLocation.h>
+#include <clang/Rewrite/Core/Rewriter.h>
 #include <string>
 
 struct PluginOptions {
@@ -18,13 +19,15 @@ private:
   std::map<clang::VarDecl *, PointerType> variables;
   std::map<clang::FunctionDecl *, FunctionType> functions;
   PluginOptions &options;
+  clang::Rewriter &rewriter;
 
   clang::FunctionDecl *pmWrapperReadObjectDecl;
   clang::FunctionDecl *pmWrapperWriteObjectDecl;
 
 public:
-  VarManager(clang::ASTContext &context, PluginOptions &options)
-      : context(context), options(options) {}
+  VarManager(clang::ASTContext &context, PluginOptions &options,
+             clang::Rewriter &rewriter)
+      : context(context), options(options), rewriter(rewriter) {}
 
   PointerType getVariableType(clang::VarDecl *decl);
   FunctionType &getFunctionType(clang::FunctionDecl *decl);
@@ -43,15 +46,16 @@ public:
   void registerVariable(clang::FunctionDecl *funcDecl, clang::VarDecl *decl);
 
   clang::CallExpr *CreatePmReadCallExpr(clang::Expr *ptr);
-
-  static PointerType GetUpdatedPointerType(PointerType oldType,
-                                           PointerType newType);
+  clang::CallExpr *CreatePmWriteCallExpr(clang::Expr *pmPtr, clang::Expr *vmPtr,
+                                         clang::Expr *size);
 
   void reportDiagnostic(clang::DiagnosticsEngine::Level level,
                         clang::SourceRange range, std::string message);
 
   void reportError(clang::SourceRange range, std::string message);
   void reportWarning(clang::SourceRange range, std::string message);
+
+  clang::Rewriter &getRewriter();
 };
 
 #endif

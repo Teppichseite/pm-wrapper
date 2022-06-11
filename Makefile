@@ -1,4 +1,4 @@
-CC = clang
+CC = clang-13
 CFLAGS = -Wall -Werror -g -pthread -lm -pthread -lstdc++
 PM_WRAPPER_RUNTIME_FILES = ./src/runtime/pm_wrapper.c ./src/runtime/region_id_map.c ./src/runtime/context_map.c ./src/runtime/hashmap/hashmap.c
 PM_WRAPPER_TEST_FILES = ./src/tests/multiple_region/multiple_region_test.c
@@ -7,6 +7,7 @@ PM_ATLAS_BACKEND = ./src/backends/atlas_backend.c ../Atlas/runtime/Atlas-Build/l
 
 pmdk: ./bin/multiple_region_pmdk
 atlas: ./bin/multiple_region_atlas
+store: ./bin/store
 
 ./bin/multiple_region_pmdk: ./src/tests/multiple_region/multiple_region_pmdk.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND)
 	mkdir ./bin -p
@@ -15,6 +16,10 @@ atlas: ./bin/multiple_region_atlas
 ./bin/multiple_region_atlas: ./src/tests/multiple_region/multiple_region_atlas.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_ATLAS_BACKEND)
 	mkdir ./bin -p
 	$(CC) ./src/tests/multiple_region/multiple_region_atlas.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_WRAPPER_TEST_FILES) $(PM_ATLAS_BACKEND) $(CFLAGS) -o ./bin/multiple_region_atlas
+
+./bin/store: ./src/tests/store/store.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND)
+	mkdir ./bin -p
+	$(CC) ./src/tests/store/store.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND) $(CFLAGS) -o ./bin/store
 
 clean:
 	rm ./bin/*

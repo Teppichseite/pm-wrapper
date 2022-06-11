@@ -1,4 +1,5 @@
 #include "ExpressionEvaluator.h"
+#include "ExpressionWriter.h"
 #include "FunctionEvaluator.h"
 #include "PointerTypeAttribute.h"
 #include "Types.h"
@@ -44,6 +45,9 @@ PointerType ExpressionEvaluator::run() {
 
     this->TraverseStmt(expression);
   }
+
+  ExpressionWriter writer{context, varManager, expression, ptrTypes};
+  writer.run();
 
   return currentPointerType;
 }
@@ -194,8 +198,6 @@ bool ExpressionEvaluator::VisitUnaryOperator(clang::UnaryOperator *op) {
       return false;
     }
 
-    op->setSubExpr(varManager.CreatePmReadCallExpr(op->getSubExpr()));
-
     auto qualType = op->getType();
     if (!qualType->isPointerType()) {
       setType(op, PointerType::NO_PM);
@@ -327,6 +329,7 @@ bool ExpressionEvaluator::VisitMemberExpr(clang::MemberExpr *expr) {
   auto qualType = expr->getType();
 
   if (pointerType == PointerType::PM) {
+
     if (qualType->isPointerType() || qualType->isArrayType()) {
       setType(expr, PointerType::PM);
       return false;

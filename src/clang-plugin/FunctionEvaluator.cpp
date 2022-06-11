@@ -23,7 +23,8 @@ PointerType FunctionEvaluator::run() {
         "Cannot return NULL when pointer type cannot be deduced.");
   }
 
-  return resultingPointerType;
+  return functionDecl->getReturnType()->isVoidType() ? PointerType::NO_PM
+                                                     : resultingPointerType;
 }
 
 bool FunctionEvaluator::VisitVarDecl(clang::VarDecl *decl) {
@@ -59,10 +60,6 @@ bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
 }
 
 bool FunctionEvaluator::VisitReturnStmt(clang::ReturnStmt *stmt) {
-  if (functionDecl->getReturnType()->isVoidType()) {
-    resultingPointerType = PointerType::NO_PM;
-    return true;
-  }
 
   ExpressionEvaluator evaluator{context, varManager, functionDecl,
                                 stmt->getRetValue()};

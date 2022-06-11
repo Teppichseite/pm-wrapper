@@ -15,6 +15,8 @@
 #include <llvm-13/llvm/Support/raw_ostream.h>
 #include <string>
 
+using path = std::experimental::filesystem::path;
+
 PointerType VarManager::getVariableType(clang::VarDecl *decl) {
   return variables[decl];
 }
@@ -106,23 +108,16 @@ void VarManager::printPretty() {
   llvm::outs() << "\n";
 }
 
-void printSymbolLocation(clang::ASTContext &context, clang::SourceLocation loc,
-                         PointerType type) {
-  auto &manager = context.getSourceManager();
-  auto fileId = manager.getFileID(loc);
-  auto filePath =
-      std::experimental::filesystem::canonical(manager.getFilename(loc).str());
-  auto line = manager.getLineNumber(fileId, manager.getFileOffset(loc));
-  auto column = manager.getColumnNumber(fileId, manager.getFileOffset(loc));
-  llvm::outs() << "PM_SYMBOL_TYPE_LOC"
-               << ";" << filePath << ";" << line << "," << column << ";"
-               << pointerTypeToString(type) << "\n";
-}
+struct LocationFileInfo {
+  path path;
+  unsigned int line1;
+  unsigned int line2;
+  unsigned int column1;
+  unsigned int column2;
+};
 
-void printDiagnosticLocation(clang::ASTContext &context,
-                             clang::SourceRange range,
-                             clang::DiagnosticsEngine::Level level,
-                             std::string message) {
+LocationFileInfo getLocationFileInfo(clang::ASTContext &context,
+                                     clang::SourceRange range) {
   auto &manager = context.getSourceManager();
   auto fileId = manager.getFileID(range.getBegin());
   auto filePath = std::experimental::filesystem::canonical(
@@ -135,9 +130,25 @@ void printDiagnosticLocation(clang::ASTContext &context,
       manager.getLineNumber(fileId, manager.getFileOffset(range.getEnd()));
   auto column2 =
       manager.getColumnNumber(fileId, manager.getFileOffset(range.getEnd()));
+  return {filePath, line1, line2, column1, column2};
+}
+
+void printSymbolLocation(clang::ASTContext &context, clang::SourceLocation loc,
+                         PointerType type) {
+  auto info = getLocationFileInfo(context, loc);
+  llvm::outs() << "PM_SYMBOL_TYPE_LOC"
+               << ";" << info.path << ";" << info.line1 << "," << info.column1
+               << ";" << pointerTypeToString(type) << "\n";
+}
+
+void printDiagnosticLocation(clang::ASTContext &context,
+                             clang::SourceRange range,
+                             clang::DiagnosticsEngine::Level level,
+                             std::string message) {
+  auto info = getLocationFileInfo(context, range);
   llvm::outs() << "PM_DIAGNOSTIC_LOC"
-               << ";" << filePath << ";" << line1 << "," << column1 << ";"
-               << line2 << "," << column2 << ";"
+               << ";" << info.path << ";" << info.line1 << "," << info.column1
+               << ";" << info.line2 << "," << info.column2 << ";"
                << diagnosticLevelToString(level) << ";" << message << "\n";
 }
 
@@ -154,8 +165,6 @@ void VarManager::print() {
     printSymbolLocation(context, decl->getBeginLoc(), type.returnType);
   }
 };
-
-using path = std::experimental::filesystem::path;
 
 bool isPathSubPath(path &parentPath, path &subPath) {
   for (auto p = parentPath.begin(), s = subPath.begin(); p != parentPath.end();
@@ -213,9 +222,19 @@ clang::CallExpr *VarManager::CreatePmReadCallExpr(clang::Expr *arg) {
   return callExpr;
 };
 
-PointerType VarManager::GetUpdatedPointerType(PointerType oldType,
-                                              PointerType newType) {
-  return PointerType::PM;
+clang::CallExpr *VarManager::CreatePmWriteCallExpr(clang::Expr *pmPtr,
+                                                   clang::Expr *vmPtr,
+                                                   clang::Expr *size) {
+  auto declRef = clang::DeclRefExpr::Create(
+      context, {}, {}, pmWrapperWriteObjectDecl, false, clang::SourceLocation{},
+      pmWrapperWriteObjectDecl->getType(), clang::ExprValueKind::VK_LValue);
+
+  auto callExpr =
+      clang::CallExpr::Create(context, declRef, {pmPtr, vmPtr, size},
+                              pmWrapperReadObjectDecl->getReturnType(),
+                              clang::ExprValueKind::VK_LValue, {}, {});
+
+  return callExpr;
 };
 
 void VarManager::reportDiagnostic(clang::DiagnosticsEngine::Level level,
@@ -237,3 +256,5 @@ void VarManager::reportError(clang::SourceRange range, std::string message) {
 void VarManager::reportWarning(clang::SourceRange range, std::string message) {
   reportDiagnostic(clang::DiagnosticsEngine::Level::Warning, range, message);
 }
+
+clang::Rewriter &VarManager::getRewriter() { return rewriter; }

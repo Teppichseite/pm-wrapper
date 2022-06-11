@@ -1,43 +1,41 @@
-#ifndef EXPRESSION_EVALUATOR_H
-#define EXPRESSION_EVALUATOR_H
-#include "FunctionEvaluator.h"
+#ifndef EXPRESSION_WRITER_H
+#define EXPRESSION_WRITER_H
+#include "Types.h"
 #include "VarManager.h"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
-#include <clang/AST/ExprCXX.h>
 #include <clang/AST/RecursiveASTVisitor.h>
-#include <clang/AST/Stmt.h>
-#include <clang/Rewrite/Core/Rewriter.h>
-#include <map>
-#include <set>
-#include <stack>
+#include <sstream>
+#include <string>
 #include <vector>
 
-class ExpressionEvaluator
-    : public clang::RecursiveASTVisitor<ExpressionEvaluator> {
+class ExpressionWriter : public clang::RecursiveASTVisitor<ExpressionWriter> {
 
 private:
   clang::ASTContext &context;
   VarManager &varManager;
-  clang::FunctionDecl *function;
   clang::Expr *expression;
-
-  std::map<clang::Expr *, PointerType> ptrTypes;
-  PointerType currentPointerType;
-  std::stack<clang::DeclRefExpr *> lastRefExpressions;
+  std::map<clang::Expr *, PointerType> &ptrTypes;
 
   PointerType getType(clang::Expr *expr);
-  void setType(clang::Expr *expr, PointerType type);
-  clang::DeclRefExpr *getLastRefExpr();
+
+  std::stringstream stream;
+
+  std::vector<std::string> varDecls;
+
+  std::string createVarDecl(clang::Expr *expr);
+  void wrapReadCall(clang::Expr *expr);
 
 public:
-  explicit ExpressionEvaluator(clang::ASTContext &context,
-                               VarManager &varManager,
-                               clang::FunctionDecl *function, clang::Expr *expr)
-      : context(context), varManager(varManager), function(function),
-        expression(expr){};
-  PointerType run();
+  explicit ExpressionWriter(clang::ASTContext &context, VarManager &varManager,
+                            clang::Expr *expression,
+                            std::map<clang::Expr *, PointerType> &ptrTypes)
+      : context(context), varManager(varManager), expression(expression),
+        ptrTypes(ptrTypes){};
+  void run();
+  std::string evaluateToString();
+
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitUnaryOperator(clang::UnaryOperator *op);
   bool VisitBinaryOperator(clang::BinaryOperator *op);
@@ -49,8 +47,10 @@ public:
   bool VisitCallExpr(clang::CallExpr *expr);
   bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr);
   bool VisitInitListExpr(clang::InitListExpr *expr);
+  bool VisitDesignatedInitExpr(clang::DesignatedInitExpr *expr);
   bool VisitMemberExpr(clang::MemberExpr *expr);
   bool VisitParenExpr(clang::ParenExpr *expr);
+  bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr);
 };
 
 #endif

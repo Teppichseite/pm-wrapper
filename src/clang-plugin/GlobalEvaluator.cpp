@@ -27,8 +27,11 @@ GlobalEvaluator::GlobalEvaluator(clang::ASTContext &ctx, VarManager &manager)
        {.returnType = PointerType::PM,
         .parameterTypes = {PointerType::NO_PM, PointerType::NO_PM}}},
       {"pm_read_object",
+       {.returnType = PointerType::NO_PM, .parameterTypes = {PointerType::PM}}},
+      {"pm_write_object",
        {.returnType = PointerType::NO_PM,
-        .parameterTypes = {PointerType::PM}}}};
+        .parameterTypes = {PointerType::PM, PointerType::NO_PM,
+                           PointerType::NO_PM}}}};
 }
 
 void GlobalEvaluator::run() {
