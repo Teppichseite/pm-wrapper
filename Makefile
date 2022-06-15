@@ -1,5 +1,5 @@
 CC = clang-13
-CFLAGS = -Wall -Werror -g -pthread -lm -pthread -lstdc++
+CFLAGS = -Wall -g -pthread -lm -pthread -lstdc++
 PM_WRAPPER_RUNTIME_FILES = ./src/runtime/pm_wrapper.c ./src/runtime/region_id_map.c ./src/runtime/context_map.c ./src/runtime/hashmap/hashmap.c
 PM_WRAPPER_TEST_FILES = ./src/tests/multiple_region/multiple_region_test.c
 PM_PMDK_BACKEND = ./src/backends/pmdk_backend.c -lpmemobj -lpmem

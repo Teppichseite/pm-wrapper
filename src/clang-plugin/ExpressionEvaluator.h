@@ -8,6 +8,7 @@
 #include <clang/AST/ExprCXX.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceLocation.h>
 #include <clang/Rewrite/Core/Rewriter.h>
 #include <map>
 #include <set>
@@ -22,6 +23,7 @@ private:
   VarManager &varManager;
   clang::FunctionDecl *function;
   clang::Expr *expression;
+  clang::SourceLocation beforeInsertLoc;
 
   std::map<clang::Expr *, PointerType> ptrTypes;
   PointerType currentPointerType;
@@ -34,9 +36,10 @@ private:
 public:
   explicit ExpressionEvaluator(clang::ASTContext &context,
                                VarManager &varManager,
-                               clang::FunctionDecl *function, clang::Expr *expr)
+                               clang::FunctionDecl *function, clang::Expr *expr,
+                               clang::SourceLocation beforeInsertLoc)
       : context(context), varManager(varManager), function(function),
-        expression(expr){};
+        expression(expr), beforeInsertLoc(beforeInsertLoc){};
   PointerType run();
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitUnaryOperator(clang::UnaryOperator *op);

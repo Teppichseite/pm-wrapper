@@ -13,9 +13,28 @@
 #include <experimental/filesystem>
 #include <llvm-13/llvm/Support/JSON.h>
 #include <llvm-13/llvm/Support/raw_ostream.h>
+#include <random>
+#include <sstream>
 #include <string>
 
-using path = std::experimental::filesystem::path;
+using file_path = std::experimental::filesystem::path;
+
+std::string getRandomString() {
+  std::string chars(
+      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+  std::random_device rd;
+  std::mt19937 generator(rd());
+
+  std::shuffle(chars.begin(), chars.end(), generator);
+
+  return chars.substr(0, 10);
+}
+
+VarManager::VarManager(clang::ASTContext &context, PluginOptions &options,
+                       clang::Rewriter &rewriter)
+    : context(context), options(options), rewriter(rewriter),
+      additionalVarCount(0), additionalVarPostfix(getRandomString()) {}
 
 PointerType VarManager::getVariableType(clang::VarDecl *decl) {
   return variables[decl];
@@ -109,7 +128,7 @@ void VarManager::printPretty() {
 }
 
 struct LocationFileInfo {
-  path path;
+  file_path path;
   unsigned int line1;
   unsigned int line2;
   unsigned int column1;
@@ -166,7 +185,7 @@ void VarManager::print() {
   }
 };
 
-bool isPathSubPath(path &parentPath, path &subPath) {
+bool isPathSubPath(file_path &parentPath, file_path &subPath) {
   for (auto p = parentPath.begin(), s = subPath.begin(); p != parentPath.end();
        ++p, ++s) {
 
@@ -179,7 +198,7 @@ bool isPathSubPath(path &parentPath, path &subPath) {
 
 bool VarManager::isSymbolPartOfSource(clang::Decl *decl) {
   auto &manager = context.getSourceManager();
-  path relativeSymbolPath{manager.getFilename(decl->getLocation()).str()};
+  file_path relativeSymbolPath{manager.getFilename(decl->getLocation()).str()};
   auto absoluteSymbolPath =
       std::experimental::filesystem::canonical(relativeSymbolPath);
   auto absoluteSourcePath =
@@ -201,7 +220,8 @@ void VarManager::registerVariable(clang::FunctionDecl *funcDecl,
   }
 
   if (decl->hasInit()) {
-    ExpressionEvaluator evaluator{context, *this, funcDecl, decl->getInit()};
+    ExpressionEvaluator evaluator{context, *this, funcDecl, decl->getInit(),
+                                  decl->getBeginLoc()};
     auto type = evaluator.run();
     if (!hasPointerTypeAttribute(decl)) {
       setVariable(decl, type);
@@ -258,3 +278,15 @@ void VarManager::reportWarning(clang::SourceRange range, std::string message) {
 }
 
 clang::Rewriter &VarManager::getRewriter() { return rewriter; }
+
+std::string VarManager::createAdditionalVarName() {
+  std::stringstream stream;
+  stream << "var_";
+  stream << additionalVarPostfix;
+  stream << "_";
+  stream << additionalVarCount;
+
+  additionalVarCount++;
+
+  return stream.str();
+};

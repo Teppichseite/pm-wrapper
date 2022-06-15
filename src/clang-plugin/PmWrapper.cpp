@@ -25,6 +25,7 @@ public:
     GlobalEvaluator globalEvaluator{ctx, varManager};
     globalEvaluator.run();
     varManager.print();
+    varManager.printPretty();
 
     rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID())
         .write(llvm::outs());

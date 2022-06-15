@@ -21,26 +21,26 @@ struct btree {
 /*
  * btree_insert -- inserts new element into the tree
  */
-static void btree_insert(struct btree *btree, int64_t key, const char *value) {
+static void btree_insert(struct btree *btree, int64_t key, char *value) {
   struct btree_node **dst = &btree->root;
-
-  struct btree_node *d = *dst;
-  struct btree_node **n = &d->slots[0];
 
   while (*dst != NULL) {
     dst = &(*dst)->slots[key > (*dst)->key];
   }
 
-  struct btree_node *new_node =
-      (struct btree_node *)pm_alloc(sizeof(struct btree_node *));
+  struct btree_node *new_node = (struct btree_node *)pm_alloc(
+      sizeof(struct btree_node *) + strlen(value) + 1);
 
   new_node->key = key;
+  pm_write_object(&new_node->value, value, strlen(value) + 1);
+
+  *dst = new_node;
 }
 
 /*
  * btree_find -- searches for key in the tree
  */
-static const char *btree_find(struct btree *btree, int64_t key) {
+static char *btree_find(struct btree *btree, int64_t key) {
   struct btree_node *node = btree->root;
 
   while (node != NULL) {
@@ -69,6 +69,8 @@ static void btree_foreach(struct btree *btree, struct btree_node *node,
     return;
   }
 
+  node->key += 10;
+
   btree_foreach(btree, node->slots[0], cb);
 
   cb(node);
@@ -89,7 +91,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  const char *path = argv[1];
+  char *path = argv[1];
 
   PmRegionConfig main_region_config = {.file_path = "./test",
                                        .root_size = sizeof(struct btree)};
@@ -103,9 +105,9 @@ int main(int argc, char *argv[]) {
 
   struct btree *btree = (struct btree *)pm_get_root();
 
-  const char op = argv[2][0];
+  char op = argv[2][0];
   int64_t key;
-  const char *value;
+  char *value;
 
   switch (op) {
   case 'p':
@@ -118,7 +120,7 @@ int main(int argc, char *argv[]) {
     break;
   case 'f':
     key = atoll(argv[3]);
-    const char *found_value;
+    char *found_value;
     if ((found_value = btree_find(btree, key)) != NULL)
       printf("%s\n", found_value);
     else

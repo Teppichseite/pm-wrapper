@@ -24,10 +24,12 @@ private:
   clang::FunctionDecl *pmWrapperReadObjectDecl;
   clang::FunctionDecl *pmWrapperWriteObjectDecl;
 
+  std::string additionalVarPostfix;
+  int additionalVarCount;
+
 public:
   VarManager(clang::ASTContext &context, PluginOptions &options,
-             clang::Rewriter &rewriter)
-      : context(context), options(options), rewriter(rewriter) {}
+             clang::Rewriter &rewriter);
 
   PointerType getVariableType(clang::VarDecl *decl);
   FunctionType &getFunctionType(clang::FunctionDecl *decl);
@@ -56,6 +58,8 @@ public:
   void reportWarning(clang::SourceRange range, std::string message);
 
   clang::Rewriter &getRewriter();
+
+  std::string createAdditionalVarName();
 };
 
 #endif

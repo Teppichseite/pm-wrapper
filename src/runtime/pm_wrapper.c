@@ -163,10 +163,10 @@ void *pm_read_object(void *ptr) {
   return config.backend->read_object(context, thin_ptr.offset);
 };
 
-void pm_write_object(void *pm_ptr, void *vm_ptr, char *data, int size) {
+void pm_write_object(void *pm_ptr, char *data, int size) {
   PmBackendContext *context =
       cm_get_context(destruct_pm_ptr(pm_ptr).reference_id);
-  config.backend->write_object(context, vm_ptr, data, size);
+  config.backend->write_object(context, pm_read_object(pm_ptr), data, size);
 }
 
 void pm_close_reg(pm_region_reference_id reference_id) {

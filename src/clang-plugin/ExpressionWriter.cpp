@@ -1,5 +1,6 @@
 #include "ExpressionWriter.h"
 #include "Types.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/Lex/Lexer.h"
 #include <algorithm>
 #include <array>
@@ -16,6 +17,7 @@
 #include <clang/AST/Type.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/TypeTraits.h>
+#include <functional>
 #include <llvm-13/llvm/ADT/APInt.h>
 #include <llvm-13/llvm/Support/Casting.h>
 #include <llvm-13/llvm/Support/raw_ostream.h>
@@ -24,11 +26,19 @@
 #include <vector>
 
 void ExpressionWriter::run() {
-  varManager.getRewriter().ReplaceText(expression->getSourceRange(),
+
+  clang::SourceLocation startLoc =
+      varManager.getRewriter().getSourceMgr().getFileLoc(
+          expression->getBeginLoc());
+  clang::SourceLocation endLoc =
+      varManager.getRewriter().getSourceMgr().getFileLoc(
+          expression->getEndLoc());
+
+  varManager.getRewriter().ReplaceText(clang::SourceRange{startLoc, endLoc},
                                        evaluateToString());
 
   for (auto decl : varDecls) {
-    varManager.getRewriter().InsertText(expression->getBeginLoc(), decl);
+    varManager.getRewriter().InsertText(beforeInsertLoc, decl);
   }
 }
 
@@ -76,20 +86,94 @@ void ExpressionWriter::wrapReadCall(clang::Expr *expr) {
   stream << "))";
 }
 
+void ExpressionWriter::addWriteCall(clang::Expr *pmPtr, clang::Expr *value,
+                                    std::function<void(std::string)> writeValue,
+                                    std::function<void()> writeOffset,
+                                    bool offsetCharSteps) {
+
+  auto pmPtrName = createVarDecl(value, true);
+  auto pmPtrValueName = createVarDecl(value, false);
+  auto dataValueName = createVarDecl(value, false);
+
+  auto valuePointerType = "(" + value->getType().getAsString() + "*)";
+
+  stream << "(";
+
+  stream << "(" << pmPtrName << " = " << valuePointerType << "("
+         << (offsetCharSteps ? "(char*)" : "") << "(";
+  TraverseStmt(pmPtr);
+  stream << ") + (";
+  writeOffset();
+  stream << "))),";
+
+  stream << "(" << pmPtrValueName << " = "
+         << "*" << valuePointerType << "pm_read_object(" << pmPtrName << ")),";
+
+  stream << "(" << dataValueName << " = (";
+  writeValue(pmPtrValueName);
+  stream << ")),";
+
+  stream << "pm_write_object(" << pmPtrName << ","
+         << "(char*)&" << dataValueName << ","
+         << "sizeof(" << value->getType().getAsString() << ")),";
+
+  stream << dataValueName;
+  stream << ")";
+};
+
+uint64_t ExpressionWriter::getMemberOffset(clang::MemberExpr *expr) {
+  auto fieldDecl = llvm::dyn_cast<clang::FieldDecl>(expr->getMemberDecl());
+
+  if (!fieldDecl) {
+    return -1;
+  }
+
+  auto recordDecl = fieldDecl->getParent();
+  auto &recordLayout = context.getASTRecordLayout(recordDecl);
+  return recordLayout.getFieldOffset(fieldDecl->getFieldIndex()) / 8;
+};
+
+std::string ExpressionWriter::createVarDecl(clang::Expr *expr, bool asPointer) {
+  ExpressionWriter writer(context, varManager, expr, ptrTypes, beforeInsertLoc);
+
+  auto varName = varManager.createAdditionalVarName();
+
+  std::stringstream varStream;
+  varStream << expr->getType().getAsString();
+  if (asPointer) {
+    varStream << "*";
+  }
+  varStream << " ";
+  varStream << varName;
+  varStream << ";";
+
+  varDecls.push_back(varStream.str());
+
+  return varName;
+}
+
 bool ExpressionWriter::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
   stream << expr->getDecl()->getNameAsString();
   return false;
 }
 
 bool ExpressionWriter::VisitCallExpr(clang::CallExpr *expr) {
-
-  stream << expr->getDirectCallee()->getNameAsString();
-
+  TraverseStmt(expr->getCallee());
   stream << "(";
   auto numArgs = expr->getNumArgs();
   for (int i = 0; i < numArgs; i++) {
     auto arg = expr->getArg(i);
-    TraverseStmt(arg);
+
+    auto funcDecl = expr->getDirectCallee();
+    if (funcDecl && (!varManager.isSymbolPartOfSource(funcDecl) &&
+                     !varManager.isFunctionSet(funcDecl))) {
+
+      llvm::outs() << funcDecl->getNameAsString() << "\n";
+      wrapReadCall(arg);
+    } else {
+      TraverseStmt(arg);
+    }
+
     if (i < numArgs - 1) {
       stream << ",";
     }
@@ -101,6 +185,54 @@ bool ExpressionWriter::VisitCallExpr(clang::CallExpr *expr) {
 
 bool ExpressionWriter::VisitUnaryOperator(clang::UnaryOperator *op) {
   auto opcode = clang::UnaryOperator::getOpcodeStr(op->getOpcode());
+
+  if (op->getOpcode() == clang::UnaryOperator::Opcode::UO_AddrOf) {
+
+    {
+      auto memberExpr = getSubExpr<clang::MemberExpr>(op->getSubExpr());
+      if (memberExpr) {
+
+        auto base = memberExpr->getBase();
+        if (getType(base) == PointerType::PM) {
+
+          auto offset = getMemberOffset(memberExpr);
+
+          if (memberExpr->getType()->isArrayType()) {
+            stream << "((char*)(";
+            TraverseStmt(base);
+            stream << ") + (";
+            stream << offset;
+            stream << "))";
+            return false;
+          }
+
+          stream << "((";
+          stream << memberExpr->getType().getAsString();
+          stream << "*)(((char*)(";
+          TraverseStmt(base);
+          stream << ")) + (";
+          stream << offset;
+          stream << ")))";
+          return false;
+        }
+      }
+    }
+
+    {
+      auto subsExpr = getSubExpr<clang::ArraySubscriptExpr>(op->getSubExpr());
+      if (subsExpr) {
+        auto base = subsExpr->getLHS();
+        if (getType(base) == PointerType::PM) {
+          stream << "(";
+          TraverseStmt(base);
+          stream << " + (";
+          TraverseStmt(subsExpr->getRHS());
+          stream << "))";
+          return false;
+        }
+      }
+    }
+  }
 
   if (!op->isIncrementDecrementOp()) {
     stream << opcode.str();
@@ -120,89 +252,64 @@ bool ExpressionWriter::VisitUnaryOperator(clang::UnaryOperator *op) {
   return false;
 }
 
-std::string ExpressionWriter::createVarDecl(clang::Expr *expr) {
-  ExpressionWriter writer(context, varManager, expr, ptrTypes);
-  std::stringstream varStream;
-  varStream << expr->getType().getAsString();
-  varStream << " _addr1 = ";
-  varStream << writer.evaluateToString();
-  varStream << "; ";
-
-  varDecls.push_back(varStream.str());
-
-  return "_addr1";
-}
-
 bool ExpressionWriter::VisitBinaryOperator(clang::BinaryOperator *op) {
+
+  auto opcode = clang::BinaryOperator::getOpcodeStr(op->getOpcode()).str();
 
   auto lhs = op->getLHS();
   auto rhs = op->getRHS();
 
-  {
+  auto writeValue = [this, rhs, op, &opcode](std::string currentValue) {
+    if (op->isAssignmentOp() && !op->isCompoundAssignmentOp()) {
+      this->TraverseStmt(rhs);
+      return;
+    }
+
+    this->stream << currentValue;
+
+    if (op->isCompoundAssignmentOp()) {
+      opcode.pop_back();
+    }
+
+    stream << opcode;
+
+    this->TraverseStmt(rhs);
+  };
+
+  if (op->isAssignmentOp()) {
     auto unaryExpr = getSubExpr<clang::UnaryOperator>(lhs);
-    if (unaryExpr) {
-      if (unaryExpr->getOpcode() == clang::UnaryOperator::Opcode::UO_Deref) {
-        auto subExpr = unaryExpr->getSubExpr();
-        if (getType(subExpr) == PointerType::PM) {
-          stream << "pm_write_object(";
-          TraverseStmt(subExpr);
-          stream << ",";
-          wrapReadCall(subExpr);
-          stream << ",";
-          TraverseStmt(rhs);
-          stream << ",sizeof(";
-          stream << unaryExpr->getType().getAsString();
-          stream << "))";
-          return false;
-        }
-      }
+    if (unaryExpr &&
+        unaryExpr->getOpcode() == clang::UnaryOperator::Opcode::UO_Deref &&
+        getType(unaryExpr->getSubExpr()) == PointerType::PM) {
+      auto subExpr = unaryExpr->getSubExpr();
+      addWriteCall(
+          unaryExpr->getSubExpr(), rhs, writeValue,
+          [this]() { this->stream << "0"; }, false);
+      return false;
     }
-  }
 
-  {
     auto memberExpr = getSubExpr<clang::MemberExpr>(lhs);
-    if (memberExpr) {
-      auto base = memberExpr->getBase();
-      if (getType(base) == PointerType::PM) {
-
-        auto varName = createVarDecl(rhs);
-
-        stream << "pm_write_object(";
-        TraverseStmt(base);
-        stream << ",&(";
-        TraverseStmt(memberExpr);
-        stream << "),&";
-        stream << varName;
-        stream << ",sizeof(";
-        stream << memberExpr->getType().getAsString();
-        stream << "))";
-        return false;
-      }
+    if (memberExpr && getType(memberExpr->getBase()) == PointerType::PM) {
+      addWriteCall(
+          memberExpr->getBase(), rhs, writeValue,
+          [this, memberExpr]() { this->stream << getMemberOffset(memberExpr); },
+          true);
+      return false;
     }
-  }
 
-  {
     auto subsExpr = getSubExpr<clang::ArraySubscriptExpr>(lhs);
-    if (subsExpr) {
+    if (subsExpr && getType(subsExpr->getLHS()) == PointerType::PM) {
       auto base = subsExpr->getLHS();
-      if (getType(base) == PointerType::PM) {
-        stream << "pm_write_object(";
-        TraverseStmt(base);
-        stream << ",&(";
-        TraverseStmt(subsExpr);
-        stream << "),";
-        TraverseStmt(rhs);
-        stream << ",sizeof(";
-        stream << subsExpr->getType().getAsString();
-        stream << "))";
-        return false;
-      }
+      addWriteCall(
+          base, lhs, writeValue,
+          [this, subsExpr]() { this->TraverseStmt(subsExpr->getRHS()); },
+          false);
+      return false;
     }
   }
 
-  auto opcode = clang::BinaryOperator::getOpcodeStr(op->getOpcode());
   TraverseStmt(op->getLHS());
-  stream << opcode.str();
+  stream << opcode;
   TraverseStmt(op->getRHS());
   return false;
 }
@@ -229,6 +336,11 @@ bool ExpressionWriter::VisitCharacterLiteral(clang::CharacterLiteral *literal) {
 
 bool ExpressionWriter::VisitCastExpr(clang::CastExpr *expr) {
 
+  if (expr->getCastKind() == clang::CastKind::CK_NullToPointer) {
+    stream << "NULL";
+    return false;
+  }
+
   if (llvm::isa<clang::ImplicitCastExpr>(expr)) {
     TraverseStmt(expr->getSubExpr());
     return false;
@@ -241,7 +353,13 @@ bool ExpressionWriter::VisitCastExpr(clang::CastExpr *expr) {
 
 bool ExpressionWriter::VisitArraySubscriptExpr(
     clang::ArraySubscriptExpr *expr) {
-  wrapReadCall(expr->getLHS());
+
+  if (expr->getLHS()->getType()->isArrayType()) {
+    TraverseStmt(expr->getLHS());
+  } else {
+    wrapReadCall(expr->getLHS());
+  }
+
   stream << "[";
   TraverseStmt(expr->getRHS());
   stream << "]";
@@ -297,6 +415,18 @@ bool ExpressionWriter::VisitDesignatedInitExpr(
 }
 
 bool ExpressionWriter::VisitMemberExpr(clang::MemberExpr *expr) {
+
+  if (getType(expr->getBase()) == PointerType::PM &&
+      expr->getType()->isArrayType()) {
+
+    auto itemType = expr->getType()->getAsArrayTypeUnsafe()->getElementType();
+
+    stream << "(" << itemType.getAsString() << "*)"
+           << "((char*)(";
+    TraverseStmt(expr->getBase());
+    stream << ") + " << getMemberOffset(expr) << ")";
+    return false;
+  }
 
   wrapReadCall(expr->getBase());
 

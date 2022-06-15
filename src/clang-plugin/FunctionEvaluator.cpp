@@ -52,7 +52,12 @@ bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
   };
 
   if (!llvm::isa<clang::Expr>(stmt)) {
-    ExpressionEvaluator evaluator{context, varManager, functionDecl, expr};
+
+    auto insertLoc = llvm::isa<clang::CompoundStmt>(stmt) ? expr->getBeginLoc()
+                                                          : stmt->getBeginLoc();
+
+    ExpressionEvaluator evaluator{context, varManager, functionDecl, expr,
+                                  insertLoc};
     evaluator.run();
   }
 
@@ -61,8 +66,12 @@ bool FunctionEvaluator::VisitExpr(clang::Expr *expr) {
 
 bool FunctionEvaluator::VisitReturnStmt(clang::ReturnStmt *stmt) {
 
+  if (functionDecl->getReturnType()->isVoidType()) {
+    return true;
+  }
+
   ExpressionEvaluator evaluator{context, varManager, functionDecl,
-                                stmt->getRetValue()};
+                                stmt->getRetValue(), stmt->getBeginLoc()};
   auto newResultingPointerType = evaluator.run();
 
   if (hasPointerTypeAttribute(functionDecl)) {

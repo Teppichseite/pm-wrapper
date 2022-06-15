@@ -40,13 +40,14 @@ PointerType ExpressionEvaluator::run() {
       break;
     }
 
-    clang::Expr *expression = expressions.top();
+    clang::Expr *lastExpression = expressions.top();
     expressions.pop();
 
-    this->TraverseStmt(expression);
+    this->TraverseStmt(lastExpression);
   }
 
-  ExpressionWriter writer{context, varManager, expression, ptrTypes};
+  ExpressionWriter writer{context, varManager, expression, ptrTypes,
+                          beforeInsertLoc};
   writer.run();
 
   return currentPointerType;
@@ -241,6 +242,11 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
       setType(op, lType);
       return false;
     }
+  }
+
+  if (op->isComparisonOp()) {
+    setType(op, PointerType::NO_PM);
+    return false;
   }
 
   setType(op, lType);

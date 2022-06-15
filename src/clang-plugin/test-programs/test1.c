@@ -3,12 +3,17 @@
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
 
+struct Test {
+  int a;
+  int b;
+};
+
 int main(int argc, char *argv[]) {
 
   const char *command = argv[1];
 
   PmRegionConfig main_region_config = {.file_path = "./test",
-                                       .root_size = sizeof(int)};
+                                       .root_size = sizeof(struct Test)};
 
   PmWrapperConfig config = {.backend = &PMDK_BACKEND,
                             .main_region_config = main_region_config};
@@ -17,14 +22,10 @@ int main(int argc, char *argv[]) {
     return 1;
   };
 
-  int *root = (int *)pm_get_root();
-
-  if (command[0] == 's') {
-    *root = 1;
-  }
+  struct Test *root = (struct Test *)pm_get_root();
 
   if (command[0] == 'g') {
-    printf("%i", *root);
+    printf("%i", root->b += 10);
   }
 
   pm_close();

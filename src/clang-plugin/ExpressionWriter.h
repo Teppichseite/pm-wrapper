@@ -6,6 +6,7 @@
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Type.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -17,6 +18,7 @@ private:
   VarManager &varManager;
   clang::Expr *expression;
   std::map<clang::Expr *, PointerType> &ptrTypes;
+  clang::SourceLocation beforeInsertLoc;
 
   PointerType getType(clang::Expr *expr);
 
@@ -24,15 +26,21 @@ private:
 
   std::vector<std::string> varDecls;
 
-  std::string createVarDecl(clang::Expr *expr);
+  std::string createVarDecl(clang::Expr *expr, bool asPointer);
   void wrapReadCall(clang::Expr *expr);
+  void addWriteCall(clang::Expr *pmPtr, clang::Expr *value,
+                    std::function<void(std::string)> writeValue,
+                    std::function<void()> writeOffset, bool offsetCharSteps);
+
+  uint64_t getMemberOffset(clang::MemberExpr *expr);
 
 public:
   explicit ExpressionWriter(clang::ASTContext &context, VarManager &varManager,
                             clang::Expr *expression,
-                            std::map<clang::Expr *, PointerType> &ptrTypes)
+                            std::map<clang::Expr *, PointerType> &ptrTypes,
+                            clang::SourceLocation beforeInsertLoc)
       : context(context), varManager(varManager), expression(expression),
-        ptrTypes(ptrTypes){};
+        ptrTypes(ptrTypes), beforeInsertLoc(beforeInsertLoc){};
   void run();
   std::string evaluateToString();
 
