@@ -3,16 +3,15 @@
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
 
-struct Test {
-  int a;
-  int b[];
+struct A {
+  int b;
 };
 
 int main(int argc, char *argv[]) {
 
-  struct Test *root = (struct Test *)pm_get_root();
+  struct A *t = (struct A *)pm_get_root();
 
-  int a = root->b[0];
+  int i = -1;
 
   return 0;
 }

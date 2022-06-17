@@ -74,6 +74,7 @@ void pm_free(void *ptr);
 void *pm_read_object(void *ptr);
 
 void pm_write_object(void *pm_ptr, char *data, int size);
+void pm_copy(void *pm_ptr, char *data, int size);
 
 void pm_close_reg(pm_region_reference_id reference_id);
 void pm_close();

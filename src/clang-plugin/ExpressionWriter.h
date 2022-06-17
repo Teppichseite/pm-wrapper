@@ -26,11 +26,17 @@ private:
 
   std::vector<std::string> varDecls;
 
-  std::string createVarDecl(clang::Expr *expr, bool asPointer);
+  std::string createVarDecl(clang::QualType type, bool applyPointer);
   void wrapReadCall(clang::Expr *expr);
-  void addWriteCall(clang::Expr *pmPtr, clang::Expr *value,
+
+  void addWriteCall(clang::Expr *pmPtr, std::function<void()> writeOffset,
+                    clang::QualType valueType,
                     std::function<void(std::string)> writeValue,
-                    std::function<void()> writeOffset, bool offsetCharSteps);
+                    bool offsetCharSteps, bool returnOldValue);
+
+  bool addAssignment(clang::Expr *lhs, clang::QualType rhsType,
+                     std::function<void()> writeRhs, bool isCompoundAssignment,
+                     std::string opcode, bool returnOldValue);
 
   uint64_t getMemberOffset(clang::MemberExpr *expr);
 

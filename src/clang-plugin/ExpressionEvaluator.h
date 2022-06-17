@@ -44,6 +44,8 @@ public:
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitUnaryOperator(clang::UnaryOperator *op);
   bool VisitBinaryOperator(clang::BinaryOperator *op);
+  bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr);
+  bool VisitConditionalOperator(clang::ConditionalOperator *expr);
   bool VisitIntegerLiteral(clang::IntegerLiteral *literal);
   bool VisitFloatingLiteral(clang::FloatingLiteral *literal);
   bool VisitCharacterLiteral(clang::CharacterLiteral *literal);

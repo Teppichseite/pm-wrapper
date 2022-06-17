@@ -209,7 +209,7 @@ bool ExpressionEvaluator::VisitUnaryOperator(clang::UnaryOperator *op) {
     return false;
   }
 
-  setType(op, getType(op));
+  setType(op, getType(op->getSubExpr()));
   return false;
 }
 
@@ -239,7 +239,7 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
           op->getSourceRange(),
           "Left hand side pointer type does not match right hand side "
           "pointer type");
-      setType(op, lType);
+      setType(op, PointerType::UNKNOWN);
       return false;
     }
   }
@@ -249,7 +249,46 @@ bool ExpressionEvaluator::VisitBinaryOperator(clang::BinaryOperator *op) {
     return false;
   }
 
+  if (op->isCommaOp()) {
+    setType(op, rType);
+    return false;
+  }
+
+  if (!op->isAssignmentOp()) {
+
+    if (lType == PointerType::PM || rType == PointerType::PM) {
+      setType(op, PointerType::PM);
+      return false;
+    }
+
+    setType(op, PointerType::NO_PM);
+    return false;
+  }
+
   setType(op, lType);
+  return false;
+}
+
+bool ExpressionEvaluator::VisitUnaryExprOrTypeTraitExpr(
+    clang::UnaryExprOrTypeTraitExpr *expr) {
+  setType(expr, PointerType::NO_PM);
+  return false;
+}
+bool ExpressionEvaluator::VisitConditionalOperator(
+    clang::ConditionalOperator *op) {
+
+  PointerType tType = getType(op->getTrueExpr());
+  PointerType fType = getType(op->getFalseExpr());
+
+  if (tType != fType) {
+    varManager.reportError(
+        op->getSourceRange(),
+        "Conditional operator has to return the same pointer type");
+    setType(op, PointerType::UNKNOWN);
+    return false;
+  }
+
+  setType(op, tType);
   return false;
 }
 
