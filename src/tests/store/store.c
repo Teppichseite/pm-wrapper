@@ -1,206 +1,165 @@
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct entry { /* queue entry that contains arbitrary data */
-  size_t len;  /* length of the data buffer */
-  char data[];
+struct fifo_root {
+  struct tqnode *head;
+  struct tqnode *tail;
 };
 
-struct queue {  /* array-based queue container */
-  size_t front; /* position of the first entry */
-  size_t back;  /* position of the last entry */
-
-  size_t capacity; /* size of the entries array */
-  struct entry *entries[];
+struct tqnode {
+  char data;
+  struct tqnode *prev;
+  struct tqnode *next;
 };
 
-struct root {
-  struct queue *queue;
-};
-
-/*
- * queue_new -- allocates a new queue container using the atomic API
- */
-static struct queue *queue_new(size_t nentries) {
-  struct queue *q = (struct queue *)pm_calloc(
-      sizeof(struct queue) + ((sizeof(struct entry *) * nentries)));
-
-  size_t *var_zfoFYl3sPc_0;
-  size_t var_zfoFYl3sPc_1;
-  size_t var_zfoFYl3sPc_2;
-  ((var_zfoFYl3sPc_0 = ((size_t *)(((char *)(q)) + (16)))),
-   (var_zfoFYl3sPc_1 = *((size_t *)(pm_read_object(var_zfoFYl3sPc_0)))),
-   (var_zfoFYl3sPc_2 = (nentries)),
-   pm_write_object(var_zfoFYl3sPc_0, ((char *)(&var_zfoFYl3sPc_2)),
-                   sizeof(size_t)),
-   var_zfoFYl3sPc_2);
-
-  return q;
+static void print_help(void) {
+  printf("usage: fifo <pool> <option> [<type>]\n");
+  printf("\tAvailable options:\n");
+  printf("\tinsert, <character> Insert character into FIFO\n");
+  printf("\tremove, Remove element from FIFO\n");
+  printf("\tprint, Print all FIFO elements\n");
 }
 
-/*
- * queue_nentries -- returns the number of entries
- */
-static size_t queue_nentries(struct queue *queue) {
-  return ((struct queue *)pm_read_object((queue)))->back -
-         ((struct queue *)pm_read_object((queue)))->front;
-}
+void insert_head(struct fifo_root *root, char data) {
+  struct tqnode *head = ((struct fifo_root *)pm_read_object((root)))->head;
+  struct tqnode *new_node = (struct tqnode *)pm_alloc(sizeof(struct tqnode));
+  if (!new_node) {
+    return;
+  }
+  char *var_2hFLos4f8S_0;
+  char var_2hFLos4f8S_1;
+  char var_2hFLos4f8S_2;
+  ((var_2hFLos4f8S_0 = ((char *)(((char *)(new_node)) + (0)))),
+   (var_2hFLos4f8S_1 = *((char *)(pm_read_object(var_2hFLos4f8S_0)))),
+   (var_2hFLos4f8S_2 = (data)),
+   pm_write_object(var_2hFLos4f8S_0, ((char *)(&var_2hFLos4f8S_2)),
+                   sizeof(char)),
+   var_2hFLos4f8S_2);
+  struct tqnode **var_2hFLos4f8S_3;
+  struct tqnode *var_2hFLos4f8S_4;
+  struct tqnode *var_2hFLos4f8S_5;
+  ((var_2hFLos4f8S_3 = ((struct tqnode **)(((char *)(new_node)) + (16)))),
+   (var_2hFLos4f8S_4 = *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_3)))),
+   (var_2hFLos4f8S_5 = (head)),
+   pm_write_object(var_2hFLos4f8S_3, ((char *)(&var_2hFLos4f8S_5)),
+                   sizeof(struct tqnode *)),
+   var_2hFLos4f8S_5);
+  struct tqnode **var_2hFLos4f8S_6;
+  struct tqnode *var_2hFLos4f8S_7;
+  struct tqnode *var_2hFLos4f8S_8;
+  ((var_2hFLos4f8S_6 = ((struct tqnode **)(((char *)(new_node)) + (8)))),
+   (var_2hFLos4f8S_7 = *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_6)))),
+   (var_2hFLos4f8S_8 = (NULL)),
+   pm_write_object(var_2hFLos4f8S_6, ((char *)(&var_2hFLos4f8S_8)),
+                   sizeof(struct tqnode *)),
+   var_2hFLos4f8S_8);
+  struct tqnode **var_2hFLos4f8S_9;
+  struct tqnode *var_2hFLos4f8S_10;
+  struct tqnode *var_2hFLos4f8S_11;
+  ((var_2hFLos4f8S_9 = ((struct tqnode **)(((char *)(root)) + (0)))),
+   (var_2hFLos4f8S_10 =
+        *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_9)))),
+   (var_2hFLos4f8S_11 = (new_node)),
+   pm_write_object(var_2hFLos4f8S_9, ((char *)(&var_2hFLos4f8S_11)),
+                   sizeof(struct tqnode *)),
+   var_2hFLos4f8S_11);
 
-/*
- * queue_enqueue -- allocates and inserts a new entry into the queue
- */
-static int queue_enqueue(struct queue *queue, const char *data, size_t len) {
-  if (((struct queue *)pm_read_object((queue)))->capacity -
-          queue_nentries(queue) ==
-      0)
-    return -1; /* at capacity */
-
-  /* back is never decreased, need to calculate the real position */
-  size_t pos = ((struct queue *)pm_read_object((queue)))->back %
-               ((struct queue *)pm_read_object((queue)))->capacity;
-
-  int ret = 0;
-
-  printf("inserting %zu: %s\n", pos, data);
-
-  unsigned long *var_zfoFYl3sPc_6;
-  unsigned long var_zfoFYl3sPc_7;
-  unsigned long var_zfoFYl3sPc_8;
-  ((var_zfoFYl3sPc_6 = ((unsigned long *)(((char *)(queue)) + (8)))),
-   (var_zfoFYl3sPc_7 = *((unsigned long *)(pm_read_object(var_zfoFYl3sPc_6)))),
-   (var_zfoFYl3sPc_8 = (var_zfoFYl3sPc_7 + 1)),
-   pm_write_object(var_zfoFYl3sPc_6, ((char *)(&var_zfoFYl3sPc_8)),
-                   sizeof(unsigned long)),
-   var_zfoFYl3sPc_8);
-
-  struct entry *entry = (struct entry *)pm_alloc(sizeof(struct entry) + len);
-  size_t *var_zfoFYl3sPc_9;
-  size_t var_zfoFYl3sPc_10;
-  size_t var_zfoFYl3sPc_11;
-  ((var_zfoFYl3sPc_9 = ((size_t *)(((char *)(entry)) + (0)))),
-   (var_zfoFYl3sPc_10 = *((size_t *)(pm_read_object(var_zfoFYl3sPc_9)))),
-   (var_zfoFYl3sPc_11 = (len)),
-   pm_write_object(var_zfoFYl3sPc_9, ((char *)(&var_zfoFYl3sPc_11)),
-                   sizeof(size_t)),
-   var_zfoFYl3sPc_11);
-  pm_write_object(((char *)(((char *)((entry))) + 8)), (char *)data, len);
-  struct entry **var_zfoFYl3sPc_12;
-  struct entry *var_zfoFYl3sPc_13;
-  struct entry *var_zfoFYl3sPc_14;
-  ((var_zfoFYl3sPc_12 =
-        ((struct entry **)(((((struct entry **)(((char *)((queue))) + 24)))) +
-                           (pos)))),
-   (var_zfoFYl3sPc_13 =
-        *((struct entry **)(pm_read_object(var_zfoFYl3sPc_12)))),
-   (var_zfoFYl3sPc_14 = (entry)),
-   pm_write_object(var_zfoFYl3sPc_12, ((char *)(&var_zfoFYl3sPc_14)),
-                   sizeof(struct entry *)),
-   var_zfoFYl3sPc_14);
-
-  return ret;
-}
-
-/*
- * queue_dequeue - removes and frees the first element from the queue
- */
-static int queue_dequeue(struct queue *queue) {
-  if (queue_nentries(queue) == 0)
-    return -1; /* no entries to remove */
-
-  /* front is also never decreased */
-  size_t pos = ((struct queue *)pm_read_object((queue)))->front %
-               ((struct queue *)pm_read_object((queue)))->capacity;
-
-  int ret = 0;
-
-  printf(
-      "removing %zu: %s\n", pos,
-      ((char *)pm_read_object((
-          ((char *)(((char *)((((struct entry **)pm_read_object((((
-                        struct entry **)(((char *)((queue))) + 24)))))[pos]))) +
-                    8))))));
-
-  unsigned long *var_zfoFYl3sPc_15;
-  unsigned long var_zfoFYl3sPc_16;
-  unsigned long var_zfoFYl3sPc_17;
-  ((var_zfoFYl3sPc_15 = ((unsigned long *)(((char *)(queue)) + (0)))),
-   (var_zfoFYl3sPc_16 =
-        *((unsigned long *)(pm_read_object(var_zfoFYl3sPc_15)))),
-   (var_zfoFYl3sPc_17 = (var_zfoFYl3sPc_16 + 1)),
-   pm_write_object(var_zfoFYl3sPc_15, ((char *)(&var_zfoFYl3sPc_17)),
-                   sizeof(unsigned long)),
-   var_zfoFYl3sPc_17);
-  pm_free(((void *)pm_read_object((((struct entry **)pm_read_object(
-      (((struct entry **)(((char *)((queue))) + 24)))))[pos]))));
-
-  return ret;
-}
-
-/*
- * queue_show -- prints all queue entries
- */
-static void queue_show(struct queue *queue) {
-  size_t nentries = queue_nentries(queue);
-  printf("Entries %zu/%zu\n", nentries,
-         ((struct queue *)pm_read_object((queue)))->capacity);
-  for (size_t i = ((struct queue *)pm_read_object((queue)))->front;
-       i < ((struct queue *)pm_read_object((queue)))->back; ++i) {
-    size_t pos = i % ((struct queue *)pm_read_object((queue)))->capacity;
-    printf(
-        "%zu: %s\n", pos,
-        ((char *)pm_read_object((((
-            char *)(((char *)((((struct entry **)pm_read_object((((
-                        struct entry **)(((char *)((queue))) + 24)))))[pos]))) +
-                    8))))));
+  if (!head) {
+    struct tqnode **var_2hFLos4f8S_12;
+    struct tqnode *var_2hFLos4f8S_13;
+    struct tqnode *var_2hFLos4f8S_14;
+    ((var_2hFLos4f8S_12 = ((struct tqnode **)(((char *)(root)) + (8)))),
+     (var_2hFLos4f8S_13 =
+          *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_12)))),
+     (var_2hFLos4f8S_14 = (new_node)),
+     pm_write_object(var_2hFLos4f8S_12, ((char *)(&var_2hFLos4f8S_14)),
+                     sizeof(struct tqnode *)),
+     var_2hFLos4f8S_14);
+  } else {
+    struct tqnode **var_2hFLos4f8S_15;
+    struct tqnode *var_2hFLos4f8S_16;
+    struct tqnode *var_2hFLos4f8S_17;
+    ((var_2hFLos4f8S_15 = ((struct tqnode **)(((char *)(head)) + (8)))),
+     (var_2hFLos4f8S_16 =
+          *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_15)))),
+     (var_2hFLos4f8S_17 = (new_node)),
+     pm_write_object(var_2hFLos4f8S_15, ((char *)(&var_2hFLos4f8S_17)),
+                     sizeof(struct tqnode *)),
+     var_2hFLos4f8S_17);
   }
 }
 
-/* available queue operations */
-enum queue_op {
-  UNKNOWN_QUEUE_OP,
-  QUEUE_NEW,
-  QUEUE_ENQUEUE,
-  QUEUE_DEQUEUE,
-  QUEUE_SHOW,
+void remove_last(struct fifo_root *root) {
+  struct tqnode *tail = ((struct fifo_root *)pm_read_object((root)))->tail;
+  if (!((struct tqnode *)pm_read_object((tail)))->prev) {
+    struct tqnode **var_2hFLos4f8S_18;
+    struct tqnode *var_2hFLos4f8S_19;
+    struct tqnode *var_2hFLos4f8S_20;
+    ((var_2hFLos4f8S_18 = ((struct tqnode **)(((char *)(root)) + (8)))),
+     (var_2hFLos4f8S_19 =
+          *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_18)))),
+     (var_2hFLos4f8S_20 = (NULL)),
+     pm_write_object(var_2hFLos4f8S_18, ((char *)(&var_2hFLos4f8S_20)),
+                     sizeof(struct tqnode *)),
+     var_2hFLos4f8S_20);
+    struct tqnode **var_2hFLos4f8S_21;
+    struct tqnode *var_2hFLos4f8S_22;
+    struct tqnode *var_2hFLos4f8S_23;
+    ((var_2hFLos4f8S_21 = ((struct tqnode **)(((char *)(root)) + (0)))),
+     (var_2hFLos4f8S_22 =
+          *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_21)))),
+     (var_2hFLos4f8S_23 = (NULL)),
+     pm_write_object(var_2hFLos4f8S_21, ((char *)(&var_2hFLos4f8S_23)),
+                     sizeof(struct tqnode *)),
+     var_2hFLos4f8S_23);
+    pm_free(((void *)pm_read_object((tail))));
+    return;
+  }
 
-  MAX_QUEUE_OP,
-};
-
-/* queue operations strings */
-static const char *ops_str[MAX_QUEUE_OP] = {"", "new", "enqueue", "dequeue",
-                                            "show"};
-
-/*
- * parse_queue_op -- parses the operation string and returns matching queue_op
- */
-static enum queue_op queue_op_parse(const char *str) {
-  for (int i = 0; i < MAX_QUEUE_OP; ++i)
-    if (strcmp(str, ops_str[i]) == 0)
-      return (enum queue_op)i;
-
-  return UNKNOWN_QUEUE_OP;
+  struct tqnode *new_tail = ((struct tqnode *)pm_read_object((tail)))->prev;
+  struct tqnode **var_2hFLos4f8S_24;
+  struct tqnode *var_2hFLos4f8S_25;
+  struct tqnode *var_2hFLos4f8S_26;
+  ((var_2hFLos4f8S_24 = ((struct tqnode **)(((char *)(new_tail)) + (16)))),
+   (var_2hFLos4f8S_25 =
+        *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_24)))),
+   (var_2hFLos4f8S_26 = (NULL)),
+   pm_write_object(var_2hFLos4f8S_24, ((char *)(&var_2hFLos4f8S_26)),
+                   sizeof(struct tqnode *)),
+   var_2hFLos4f8S_26);
+  struct tqnode **var_2hFLos4f8S_27;
+  struct tqnode *var_2hFLos4f8S_28;
+  struct tqnode *var_2hFLos4f8S_29;
+  ((var_2hFLos4f8S_27 = ((struct tqnode **)(((char *)(root)) + (8)))),
+   (var_2hFLos4f8S_28 =
+        *((struct tqnode **)(pm_read_object(var_2hFLos4f8S_27)))),
+   (var_2hFLos4f8S_29 = (new_tail)),
+   pm_write_object(var_2hFLos4f8S_27, ((char *)(&var_2hFLos4f8S_29)),
+                   sizeof(struct tqnode *)),
+   var_2hFLos4f8S_29);
+  pm_free(((void *)pm_read_object((tail))));
 }
 
-/*
- * fail -- helper function to exit the application in the event of an error
- */
-static void __attribute__((noreturn)) /* this function terminates */
-fail(const char *msg) {
-  fprintf(stderr, "%s\n", msg);
-  exit(1);
+void print_nodes(struct tqnode *tnd) {
+  if (!tnd) {
+    return;
+  }
+  printf("%c\t", ((struct tqnode *)pm_read_object((tnd)))->data);
+  print_nodes(((struct tqnode *)pm_read_object((tnd)))->next);
 }
 
-int main(int argc, char *argv[]) {
-  enum queue_op op;
-  if (argc < 3 || ((op = queue_op_parse(argv[2]))) == UNKNOWN_QUEUE_OP)
-    fail("usage: file-name [new <n>|show|enqueue <data>|dequeue]");
+int main(int argc, char **argv) {
+
+  if (argc < 3) {
+    print_help();
+    return 0;
+  }
 
   PmRegionConfig main_region_config = {.file_path = argv[1],
-                                       .root_size = sizeof(struct root)};
+                                       .root_size = sizeof(struct fifo_root)};
 
   PmWrapperConfig config = {.backend = &PMDK_BACKEND,
                             .main_region_config = main_region_config};
@@ -209,62 +168,29 @@ int main(int argc, char *argv[]) {
     return 1;
   };
 
-  struct root *rootp = (struct root *)pm_get_root();
+  struct fifo_root *root = (struct fifo_root *)pm_get_root();
 
-  size_t capacity;
-
-  switch (op) {
-  case QUEUE_NEW:
-    if (argc != 4)
-      fail("missing size of the queue");
-
-    char *end;
-    ((*__errno_location())) = 0;
-    capacity = strtoull(argv[3], &end, 0);
-    if (((*__errno_location())) == 34 || *end != '\x00')
-      fail("invalid size of the queue");
-
-    struct queue **var_zfoFYl3sPc_3;
-    struct queue *var_zfoFYl3sPc_4;
-    struct queue *var_zfoFYl3sPc_5;
-    if (((((var_zfoFYl3sPc_3 = ((struct queue **)(((char *)(rootp)) + (0)))),
-           (var_zfoFYl3sPc_4 =
-                *((struct queue **)(pm_read_object(var_zfoFYl3sPc_3)))),
-           (var_zfoFYl3sPc_5 = (queue_new(capacity))),
-           pm_write_object(var_zfoFYl3sPc_3, ((char *)(&var_zfoFYl3sPc_5)),
-                           sizeof(struct queue *)),
-           var_zfoFYl3sPc_5))) == ((NULL)))
-      fail("failed to create a new queue");
-    break;
-  case QUEUE_ENQUEUE:
-    if (argc != 4)
-      fail("missing new entry data");
-
-    if (((struct root *)pm_read_object((rootp)))->queue == ((NULL)))
-      fail("queue must exist");
-
-    if (queue_enqueue(((struct root *)pm_read_object((rootp)))->queue, argv[3],
-                      strlen(argv[3]) + 1) != 0)
-      fail("failed to insert new entry");
-    break;
-  case QUEUE_DEQUEUE:
-    if (((struct root *)pm_read_object((rootp)))->queue == ((NULL)))
-      fail("queue must exist");
-
-    if (queue_dequeue(((struct root *)pm_read_object((rootp)))->queue) != 0)
-      fail("failed to remove entry");
-    break;
-  case QUEUE_SHOW:
-    if (((struct root *)pm_read_object((rootp)))->queue == ((NULL)))
-      fail("queue must exist");
-
-    queue_show(((struct root *)pm_read_object((rootp)))->queue);
-    break;
-  default:
-    break;
+  if (strcmp(argv[2], "insert") == 0) {
+    if (argc == 4) {
+      insert_head(root, *argv[3]);
+      printf("Added %c to FIFO\n", *argv[3]);
+    } else {
+      print_help();
+    }
+  } else if (strcmp(argv[2], "remove") == 0) {
+    if (!((struct fifo_root *)pm_read_object((root)))->head) {
+      printf("FIFO is empty\n");
+    } else {
+      remove_last(root);
+      printf("Removed element from FIFO\n");
+    }
+  } else if (strcmp(argv[2], "print") == 0) {
+    printf("Elements in FIFO:\n");
+    print_nodes(((struct fifo_root *)pm_read_object((root)))->head);
+    printf("\n");
+  } else {
+    print_help();
   }
-
   pm_close();
-
   return 0;
 }
