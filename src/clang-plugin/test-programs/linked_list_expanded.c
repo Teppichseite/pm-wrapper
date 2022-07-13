@@ -1,17 +1,24 @@
-#include "linked_list.h"
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
+#include "linked_list.h"
+#include <cstddef>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 struct tqnode {
   char data;
-  LL_NODES(struct tqnode, node) nodes;
+  struct {
+    struct tqnode *prev;
+    struct tqnode *next;
+  } nodes;
 };
 
 struct fifo_root {
-  LL_LIST(struct tqnode, list) list;
+  struct {
+    struct tqnode *head;
+    struct tqnode *tail;
+  } list;
 };
 
 static void print_help(void) {
@@ -50,22 +57,53 @@ int main(int argc, char **argv) {
         return 1;
       }
       new_node->data = *argv[3];
-      LL_INSERT(list, new_node, nodes);
+      do {
+        if (!new_node) {
+          break;
+        }
+        typeof(new_node) head = (list)->head;
+        (&new_node->nodes)->next = head;
+        (&new_node->nodes)->prev = ((void *)0);
+        (list)->head = new_node;
+        if (!head) {
+          (list)->tail = new_node;
+        } else {
+          (&new_node->nodes)->prev = new_node;
+        }
+      } while (0);
       printf("Added %c to FIFO\n", *argv[3]);
     } else {
       print_help();
     }
   } else if (strcmp(argv[2], "remove") == 0) {
-    if (list->head == NULL) {
+    if (list->head) {
       printf("FIFO is empty\n");
     } else {
-      LL_REMOVE_LAST(list, nodes);
+      do {
+        typeof((list)->tail) tail = (list)->tail;
+        if (!(&tail->nodes)->prev) {
+          (list)->tail = ((void *)0);
+          (list)->head = ((void *)0);
+          pm_free(tail);
+          break;
+        }
+        typeof((list)->tail) new_tail = (&tail->nodes)->prev;
+        (&new_tail->nodes)->next = ((void *)0);
+        (list)->tail = new_tail;
+        pm_free(tail);
+      } while (0);
       printf("Removed element from FIFO\n");
     }
   } else if (strcmp(argv[2], "print") == 0) {
     printf("Elements in FIFO:\n");
-    LL_FOREACH(list, nodes, current_node,
-               { printf("%c\t", current_node->data); });
+    do {
+      typeof((list)->tail) current_node = (list)->head;
+      while ((current_node) != ((void *)0)) {
+        { printf("%c\t", current_node->data); };
+        (current_node) = (&current_node->nodes)->next;
+      }
+    } while (0);
+
     printf("\n");
   } else {
     print_help();

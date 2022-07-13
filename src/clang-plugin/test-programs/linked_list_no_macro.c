@@ -1,17 +1,18 @@
-#include "linked_list.h"
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct tqnode {
-  char data;
-  LL_NODES(struct tqnode, node) nodes;
+struct fifo_root {
+  struct tqnode *head;
+  struct tqnode *tail;
 };
 
-struct fifo_root {
-  LL_LIST(struct tqnode, list) list;
+struct tqnode {
+  char data;
+  struct tqnode *prev;
+  struct tqnode *next;
 };
 
 static void print_help(void) {
@@ -20,6 +21,47 @@ static void print_help(void) {
   printf("\tinsert, <character> Insert character into FIFO\n");
   printf("\tremove, Remove element from FIFO\n");
   printf("\tprint, Print all FIFO elements\n");
+}
+
+void insert_head(struct fifo_root *root, char data) {
+  struct tqnode *head = root->head;
+  struct tqnode *new_node = (struct tqnode *)pm_alloc(sizeof(struct tqnode));
+  if (!new_node) {
+    return;
+  }
+  new_node->data = data;
+  new_node->next = head;
+  new_node->prev = NULL;
+  root->head = new_node;
+
+  if (!head) {
+    root->tail = new_node;
+  } else {
+    head->prev = new_node;
+  }
+}
+
+void remove_last(struct fifo_root *root) {
+  struct tqnode *tail = root->tail;
+  if (!tail->prev) {
+    root->tail = NULL;
+    root->head = NULL;
+    pm_free(tail);
+    return;
+  }
+
+  struct tqnode *new_tail = tail->prev;
+  new_tail->next = NULL;
+  root->tail = new_tail;
+  pm_free(tail);
+}
+
+void print_nodes(struct tqnode *tnd) {
+  if (!tnd) {
+    return;
+  }
+  printf("%c\t", tnd->data);
+  print_nodes(tnd->next);
 }
 
 int main(int argc, char **argv) {
@@ -40,32 +82,24 @@ int main(int argc, char **argv) {
   };
 
   struct fifo_root *root = (struct fifo_root *)pm_get_root();
-  typeof(root->list) *list = &root->list;
 
   if (strcmp(argv[2], "insert") == 0) {
     if (argc == 4) {
-      struct tqnode *new_node =
-          (struct tqnode *)pm_alloc(sizeof(struct tqnode));
-      if (!new_node) {
-        return 1;
-      }
-      new_node->data = *argv[3];
-      LL_INSERT(list, new_node, nodes);
+      insert_head(root, *argv[3]);
       printf("Added %c to FIFO\n", *argv[3]);
     } else {
       print_help();
     }
   } else if (strcmp(argv[2], "remove") == 0) {
-    if (list->head == NULL) {
+    if (!root->head) {
       printf("FIFO is empty\n");
     } else {
-      LL_REMOVE_LAST(list, nodes);
+      remove_last(root);
       printf("Removed element from FIFO\n");
     }
   } else if (strcmp(argv[2], "print") == 0) {
     printf("Elements in FIFO:\n");
-    LL_FOREACH(list, nodes, current_node,
-               { printf("%c\t", current_node->data); });
+    print_nodes(root->head);
     printf("\n");
   } else {
     print_help();

@@ -3,6 +3,7 @@
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
