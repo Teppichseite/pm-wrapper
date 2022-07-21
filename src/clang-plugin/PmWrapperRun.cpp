@@ -98,6 +98,9 @@ void evaluatePointers(clang::tooling::ClangTool &tool,
   clang::Rewriter rewriter;
   auto evaluateAction = customFrontendActionFactory(rewriter);
   tool.run(evaluateAction.get());
+
+  rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID())
+      .write(llvm::outs());
 }
 
 void storeExpandedVersion(clang::ASTContext &context) {
@@ -149,3 +152,6 @@ int main(int argc, const char **argv) {
 
   return 0;
 }
+
+static clang::ParsedAttrInfoRegistry::Add<PointerTypeAttribute>
+    Z("pointer-type-attribute", "Pointer type attribute");

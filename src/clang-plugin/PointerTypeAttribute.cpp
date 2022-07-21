@@ -34,6 +34,7 @@ bool hasPointerTypeAttribute(clang::Decl *decl) {
 PointerType getPointerTypeFromAttribute(clang::Decl *decl) {
   auto attr = getPointerTypeAttribute(decl);
   auto arg = attr->args().begin()[0];
+  arg->dump();
   clang::IntegerLiteral *literal = llvm::dyn_cast<clang::IntegerLiteral>(arg);
   return static_cast<PointerType>(literal->getValue().getSExtValue());
 }

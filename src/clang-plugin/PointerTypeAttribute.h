@@ -19,9 +19,18 @@ public:
   handleDeclAttribute(clang::Sema &s, clang::Decl *decl,
                       const clang::ParsedAttr &attr) const override {
     // TODO: Check that arg is a integer literal
-    std::vector<clang::Expr *> args = {attr.getArgAsExpr(0)};
-    decl->addAttr(clang::AnnotateAttr::Create(
-        s.Context, "pointer_type", args.data(), args.size(), attr.getRange()));
+    std::vector<clang::Expr *> args;
+    for (int i = 0; i < attr.getNumArgs(); i++) {
+      args.push_back(attr.getArgAsExpr(i));
+    }
+
+    auto attribute = clang::AnnotateAttr::Create(
+        s.Context, "pointer_type", args.data(), args.size(), attr.getRange());
+
+    attribute->setAttributeSpellingListIndex(
+        clang::AnnotateAttr::Spelling::GNU_annotate);
+
+    decl->addAttr(attribute);
     return AttributeApplied;
   }
 };

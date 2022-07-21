@@ -84,6 +84,7 @@ static void *read_object(PmBackendContext *context, pm_region_offset offset)
 static void write_object(PmBackendContext *context, void *dst, char *data, size_t len)
 {
     pmemobj_memcpy_persist(POOL(context), dst, data, len);
+    //memcpy(dst, data, len);
 }
 
 PmBackend PMDK_BACKEND = {

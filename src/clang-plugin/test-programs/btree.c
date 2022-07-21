@@ -70,8 +70,6 @@ static void btree_foreach(struct btree *btree, struct btree_node *node,
     return;
   }
 
-  node->key += 10;
-
   btree_foreach(btree, node->slots[0], cb);
 
   cb(node);
@@ -107,7 +105,7 @@ int main(int argc, char *argv[]) {
   struct btree *btree = (struct btree *)pm_get_root();
 
   char op = argv[2][0];
-  int64_t key;
+  int64_t key = 0;
   char *value;
 
   switch (op) {

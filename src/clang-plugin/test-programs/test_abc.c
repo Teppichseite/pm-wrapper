@@ -1,4 +1,42 @@
-extern int *__errno_location() __attribute__((nothrow)) __attribute__((const));
+typedef unsigned long size_t;
+typedef int wchar_t;
+typedef enum {
+    P_ALL,
+    P_PID,
+    P_PGID
+} idtype_t;
+typedef float _Float32;
+typedef double _Float64;
+typedef double _Float32x;
+typedef long double _Float64x;
+typedef struct {
+    int quot;
+    int rem;
+} div_t;
+typedef struct {
+    long quot;
+    long rem;
+} ldiv_t;
+typedef struct {
+    long long quot;
+    long long rem;
+} lldiv_t;
+extern size_t __ctype_get_mb_cur_max() __attribute__((nothrow));
+extern double atof(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
+extern int atoi(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
+extern long atol(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
+extern long long atoll(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
+extern double strtod(const char *__restrict __nptr, char **__restrict __endptr) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern float strtof(const char *__restrict __nptr, char **__restrict __endptr) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern long double strtold(const char *__restrict __nptr, char **__restrict __endptr) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern long strtol(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern unsigned long strtoul(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern long long strtoq(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern unsigned long long strtouq(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern long long strtoll(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern unsigned long long strtoull(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
+extern char *l64a(long __n) __attribute__((nothrow));
+extern long a64l(const char *__s) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
 typedef unsigned char __u_char;
 typedef unsigned short __u_short;
 typedef unsigned int __u_int;
@@ -63,240 +101,6 @@ typedef char *__caddr_t;
 typedef long __intptr_t;
 typedef unsigned int __socklen_t;
 typedef int __sig_atomic_t;
-typedef __int8_t int8_t;
-typedef __int16_t int16_t;
-typedef __int32_t int32_t;
-typedef __int64_t int64_t;
-typedef __uint8_t uint8_t;
-typedef __uint16_t uint16_t;
-typedef __uint32_t uint32_t;
-typedef __uint64_t uint64_t;
-typedef __int_least8_t int_least8_t;
-typedef __int_least16_t int_least16_t;
-typedef __int_least32_t int_least32_t;
-typedef __int_least64_t int_least64_t;
-typedef __uint_least8_t uint_least8_t;
-typedef __uint_least16_t uint_least16_t;
-typedef __uint_least32_t uint_least32_t;
-typedef __uint_least64_t uint_least64_t;
-typedef signed char int_fast8_t;
-typedef long int_fast16_t;
-typedef long int_fast32_t;
-typedef long int_fast64_t;
-typedef unsigned char uint_fast8_t;
-typedef unsigned long uint_fast16_t;
-typedef unsigned long uint_fast32_t;
-typedef unsigned long uint_fast64_t;
-typedef long intptr_t;
-typedef unsigned long uintptr_t;
-typedef __intmax_t intmax_t;
-typedef __uintmax_t uintmax_t;
-typedef int __gwchar_t;
-typedef struct {
-    long quot;
-    long rem;
-} imaxdiv_t;
-extern intmax_t imaxabs(intmax_t __n) __attribute__((nothrow)) __attribute__((const));
-extern imaxdiv_t imaxdiv(intmax_t __numer, intmax_t __denom) __attribute__((nothrow)) __attribute__((const));
-extern intmax_t strtoimax(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow));
-extern uintmax_t strtoumax(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow));
-extern intmax_t wcstoimax(const __gwchar_t *__restrict __nptr, __gwchar_t **__restrict __endptr, int __base) __attribute__((nothrow));
-extern uintmax_t wcstoumax(const __gwchar_t *__restrict __nptr, __gwchar_t **__restrict __endptr, int __base) __attribute__((nothrow));
-typedef unsigned long size_t;
-typedef __builtin_va_list va_list;
-typedef __builtin_va_list __gnuc_va_list;
-typedef struct {
-    int __count;
-    union {
-        unsigned int __wch;
-        char __wchb[4];
-    } __value;
-} __mbstate_t;
-typedef struct _G_fpos_t {
-    __off_t __pos;
-    __mbstate_t __state;
-} __fpos_t;
-typedef struct _G_fpos64_t {
-    __off64_t __pos;
-    __mbstate_t __state;
-} __fpos64_t;
-struct _IO_FILE;
-typedef struct _IO_FILE __FILE;
-struct _IO_FILE;
-typedef struct _IO_FILE FILE;
-struct _IO_FILE;
-struct _IO_marker;
-struct _IO_codecvt;
-struct _IO_wide_data;
-typedef void _IO_lock_t;
-struct _IO_FILE {
-    int _flags;
-    char *_IO_read_ptr;
-    char *_IO_read_end;
-    char *_IO_read_base;
-    char *_IO_write_base;
-    char *_IO_write_ptr;
-    char *_IO_write_end;
-    char *_IO_buf_base;
-    char *_IO_buf_end;
-    char *_IO_save_base;
-    char *_IO_backup_base;
-    char *_IO_save_end;
-    struct _IO_marker *_markers;
-    struct _IO_FILE *_chain;
-    int _fileno;
-    int _flags2;
-    __off_t _old_offset;
-    unsigned short _cur_column;
-    signed char _vtable_offset;
-    char _shortbuf[1];
-    _IO_lock_t *_lock;
-    __off64_t _offset;
-    struct _IO_codecvt *_codecvt;
-    struct _IO_wide_data *_wide_data;
-    struct _IO_FILE *_freeres_list;
-    void *_freeres_buf;
-    size_t __pad5;
-    int _mode;
-    char _unused2[20];
-};
-typedef __gnuc_va_list va_list;
-typedef __off_t off_t;
-typedef __ssize_t ssize_t;
-typedef __fpos_t fpos_t;
-extern FILE *stdin;
-extern FILE *stdout;
-extern FILE *stderr;
-extern int remove(const char *__filename) __attribute__((nothrow));
-extern int rename(const char *__old, const char *__new) __attribute__((nothrow));
-extern int renameat(int __oldfd, const char *__old, int __newfd, const char *__new) __attribute__((nothrow));
-extern FILE *tmpfile();
-extern char *tmpnam(char *__s) __attribute__((nothrow));
-extern char *tmpnam_r(char *__s) __attribute__((nothrow));
-extern char *tempnam(const char *__dir, const char *__pfx) __attribute__((nothrow)) __attribute__((malloc));
-extern int fclose(FILE *__stream);
-extern int fflush(FILE *__stream);
-extern int fflush_unlocked(FILE *__stream);
-extern FILE *fopen(const char *__restrict __filename, const char *__restrict __modes);
-extern FILE *freopen(const char *__restrict __filename, const char *__restrict __modes, FILE *__restrict __stream);
-extern FILE *fdopen(int __fd, const char *__modes) __attribute__((nothrow));
-extern FILE *fmemopen(void *__s, size_t __len, const char *__modes) __attribute__((nothrow));
-extern FILE *open_memstream(char **__bufloc, size_t *__sizeloc) __attribute__((nothrow));
-extern void setbuf(FILE *__restrict __stream, char *__restrict __buf) __attribute__((nothrow));
-extern int setvbuf(FILE *__restrict __stream, char *__restrict __buf, int __modes, size_t __n) __attribute__((nothrow));
-extern void setbuffer(FILE *__restrict __stream, char *__restrict __buf, size_t __size) __attribute__((nothrow));
-extern void setlinebuf(FILE *__stream) __attribute__((nothrow));
-extern int fprintf(FILE *__restrict __stream, const char *__restrict __format, ...);
-extern int printf(const char *__restrict __format, ...);
-extern int sprintf(char *__restrict __s, const char *__restrict __format, ...) __attribute__((nothrow));
-extern int vfprintf(FILE *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg);
-extern int vprintf(const char *__restrict __format, __gnuc_va_list __arg);
-extern int vsprintf(char *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) __attribute__((nothrow));
-extern int snprintf(char *__restrict __s, size_t __maxlen, const char *__restrict __format, ...) __attribute__((nothrow)) __attribute__((format(printf, 3, 4)));
-extern int vsnprintf(char *__restrict __s, size_t __maxlen, const char *__restrict __format, __gnuc_va_list __arg) __attribute__((nothrow)) __attribute__((format(printf, 3, 0)));
-extern int vdprintf(int __fd, const char *__restrict __fmt, __gnuc_va_list __arg) __attribute__((format(printf, 2, 0)));
-extern int dprintf(int __fd, const char *__restrict __fmt, ...) __attribute__((format(printf, 2, 3)));
-extern int fscanf(FILE *__restrict __stream, const char *__restrict __format, ...);
-extern int scanf(const char *__restrict __format, ...);
-extern int sscanf(const char *__restrict __s, const char *__restrict __format, ...) __attribute__((nothrow));
-extern int fscanf(FILE *__restrict __stream, const char *__restrict __format, ...) asm("__isoc99_fscanf");
-extern int scanf(const char *__restrict __format, ...) asm("__isoc99_scanf");
-extern int sscanf(const char *__restrict __s, const char *__restrict __format, ...) asm("__isoc99_sscanf") __attribute__((nothrow));
-extern int vfscanf(FILE *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) __attribute__((format(scanf, 2, 0)));
-extern int vscanf(const char *__restrict __format, __gnuc_va_list __arg) __attribute__((format(scanf, 1, 0)));
-extern int vsscanf(const char *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) __attribute__((nothrow)) __attribute__((format(scanf, 2, 0)));
-extern int vfscanf(FILE *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) asm("__isoc99_vfscanf") __attribute__((format(scanf, 2, 0)));
-extern int vscanf(const char *__restrict __format, __gnuc_va_list __arg) asm("__isoc99_vscanf") __attribute__((format(scanf, 1, 0)));
-extern int vsscanf(const char *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) asm("__isoc99_vsscanf") __attribute__((nothrow)) __attribute__((format(scanf, 2, 0)));
-extern int fgetc(FILE *__stream);
-extern int getc(FILE *__stream);
-extern int getchar();
-extern int getc_unlocked(FILE *__stream);
-extern int getchar_unlocked();
-extern int fgetc_unlocked(FILE *__stream);
-extern int fputc(int __c, FILE *__stream);
-extern int putc(int __c, FILE *__stream);
-extern int putchar(int __c);
-extern int fputc_unlocked(int __c, FILE *__stream);
-extern int putc_unlocked(int __c, FILE *__stream);
-extern int putchar_unlocked(int __c);
-extern int getw(FILE *__stream);
-extern int putw(int __w, FILE *__stream);
-extern char *fgets(char *__restrict __s, int __n, FILE *__restrict __stream);
-extern __ssize_t __getdelim(char **__restrict __lineptr, size_t *__restrict __n, int __delimiter, FILE *__restrict __stream);
-extern __ssize_t getdelim(char **__restrict __lineptr, size_t *__restrict __n, int __delimiter, FILE *__restrict __stream);
-extern __ssize_t getline(char **__restrict __lineptr, size_t *__restrict __n, FILE *__restrict __stream);
-extern int fputs(const char *__restrict __s, FILE *__restrict __stream);
-extern int puts(const char *__s);
-extern int ungetc(int __c, FILE *__stream);
-extern unsigned long fread(void *__restrict __ptr, size_t __size, size_t __n, FILE *__restrict __stream);
-extern unsigned long fwrite(const void *__restrict __ptr, size_t __size, size_t __n, FILE *__restrict __s);
-extern size_t fread_unlocked(void *__restrict __ptr, size_t __size, size_t __n, FILE *__restrict __stream);
-extern size_t fwrite_unlocked(const void *__restrict __ptr, size_t __size, size_t __n, FILE *__restrict __stream);
-extern int fseek(FILE *__stream, long __off, int __whence);
-extern long ftell(FILE *__stream);
-extern void rewind(FILE *__stream);
-extern int fseeko(FILE *__stream, __off_t __off, int __whence);
-extern __off_t ftello(FILE *__stream);
-extern int fgetpos(FILE *__restrict __stream, fpos_t *__restrict __pos);
-extern int fsetpos(FILE *__stream, const fpos_t *__pos);
-extern void clearerr(FILE *__stream) __attribute__((nothrow));
-extern int feof(FILE *__stream) __attribute__((nothrow));
-extern int ferror(FILE *__stream) __attribute__((nothrow));
-extern void clearerr_unlocked(FILE *__stream) __attribute__((nothrow));
-extern int feof_unlocked(FILE *__stream) __attribute__((nothrow));
-extern int ferror_unlocked(FILE *__stream) __attribute__((nothrow));
-extern void perror(const char *__s);
-extern int sys_nerr;
-extern const char *const sys_errlist[];
-extern int fileno(FILE *__stream) __attribute__((nothrow));
-extern int fileno_unlocked(FILE *__stream) __attribute__((nothrow));
-extern FILE *popen(const char *__command, const char *__modes);
-extern int pclose(FILE *__stream);
-extern char *ctermid(char *__s) __attribute__((nothrow));
-extern void flockfile(FILE *__stream) __attribute__((nothrow));
-extern int ftrylockfile(FILE *__stream) __attribute__((nothrow));
-extern void funlockfile(FILE *__stream) __attribute__((nothrow));
-extern int __uflow(FILE *);
-extern int __overflow(FILE *, int);
-typedef int wchar_t;
-typedef enum {
-    P_ALL,
-    P_PID,
-    P_PGID
-} idtype_t;
-typedef float _Float32;
-typedef double _Float64;
-typedef double _Float32x;
-typedef long double _Float64x;
-typedef struct {
-    int quot;
-    int rem;
-} div_t;
-typedef struct {
-    long quot;
-    long rem;
-} ldiv_t;
-typedef struct {
-    long long quot;
-    long long rem;
-} lldiv_t;
-extern size_t __ctype_get_mb_cur_max() __attribute__((nothrow));
-extern double atof(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern int atoi(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern long atol(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern long long atoll(const char *__nptr) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern double strtod(const char *__restrict __nptr, char **__restrict __endptr) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern float strtof(const char *__restrict __nptr, char **__restrict __endptr) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern long double strtold(const char *__restrict __nptr, char **__restrict __endptr) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern long strtol(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern unsigned long strtoul(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern long long strtoq(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern unsigned long long strtouq(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern long long strtoll(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern unsigned long long strtoull(const char *__restrict __nptr, char **__restrict __endptr, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern char *l64a(long __n) __attribute__((nothrow));
-extern long a64l(const char *__s) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
 typedef __u_char u_char;
 typedef __u_short u_short;
 typedef __u_int u_int;
@@ -311,8 +115,10 @@ typedef __gid_t gid_t;
 typedef __mode_t mode_t;
 typedef __nlink_t nlink_t;
 typedef __uid_t uid_t;
+typedef __off_t off_t;
 typedef __pid_t pid_t;
 typedef __id_t id_t;
+typedef __ssize_t ssize_t;
 typedef __daddr_t daddr_t;
 typedef __caddr_t caddr_t;
 typedef __key_t key_t;
@@ -323,6 +129,10 @@ typedef __timer_t timer_t;
 typedef unsigned long ulong;
 typedef unsigned short ushort;
 typedef unsigned int uint;
+typedef __int8_t int8_t;
+typedef __int16_t int16_t;
+typedef __int32_t int32_t;
+typedef __int64_t int64_t;
 typedef __uint8_t u_int8_t;
 typedef __uint16_t u_int16_t;
 typedef __uint32_t u_int32_t;
@@ -565,374 +375,6 @@ extern size_t wcstombs(char *__restrict __s, const wchar_t *__restrict __pwcs, s
 extern int rpmatch(const char *__response) __attribute__((nothrow)) __attribute__((nonnull(1)));
 extern int getsubopt(char **__restrict __optionp, char *const *__restrict __tokens, char **__restrict __valuep) __attribute__((nothrow)) __attribute__((nonnull(1, 2, 3)));
 extern int getloadavg(double __loadavg[], int __nelem) __attribute__((nothrow)) __attribute__((nonnull(1)));
-typedef long ptrdiff_t;
-typedef struct {
-    long long __clang_max_align_nonce1 __attribute__((aligned(__alignof(long long))));
-    long double __clang_max_align_nonce2 __attribute__((aligned(__alignof(long double))));
-} max_align_t;
-typedef struct pmemobjpool PMEMobjpool;
-typedef struct pmemoid {
-    uint64_t pool_uuid_lo;
-    uint64_t off;
-} PMEMoid;
-static const PMEMoid OID_NULL = {0, 0};
-PMEMobjpool *pmemobj_pool_by_ptr(const void *addr);
-PMEMobjpool *pmemobj_pool_by_oid(PMEMoid oid);
-extern int _pobj_cache_invalidate;
-extern __thread struct _pobj_pcache {
-    PMEMobjpool *pop;
-    uint64_t uuid_lo;
-    int invalidate;
-} _pobj_cached_pool;
-static inline void *pmemobj_direct_inline(PMEMoid oid) {
-    if (oid.off == 0 || oid.pool_uuid_lo == 0)
-        return ((void *)0);
-    struct _pobj_pcache *cache = &_pobj_cached_pool;
-    if (_pobj_cache_invalidate != cache->invalidate || cache->uuid_lo != oid.pool_uuid_lo) {
-        cache->invalidate = _pobj_cache_invalidate;
-        if (!(cache->pop = pmemobj_pool_by_oid(oid))) {
-            cache->uuid_lo = 0;
-            return ((void *)0);
-        }
-        cache->uuid_lo = oid.pool_uuid_lo;
-    }
-    return (void *)((uintptr_t)cache->pop + oid.off);
-}
-struct pmemvlt {
-    uint64_t runid;
-};
-void *pmemobj_volatile(PMEMobjpool *pop, struct pmemvlt *vlt, void *ptr, size_t size, int (*constr)(void *, void *), void *arg);
-PMEMoid pmemobj_oid(const void *addr);
-size_t pmemobj_alloc_usable_size(PMEMoid oid);
-uint64_t pmemobj_type_num(PMEMoid oid);
-void *pmemobj_memcpy_persist(PMEMobjpool *pop, void *dest, const void *src, size_t len);
-void *pmemobj_memset_persist(PMEMobjpool *pop, void *dest, int c, size_t len);
-void *pmemobj_memcpy(PMEMobjpool *pop, void *dest, const void *src, size_t len, unsigned int flags);
-void *pmemobj_memmove(PMEMobjpool *pop, void *dest, const void *src, size_t len, unsigned int flags);
-void *pmemobj_memset(PMEMobjpool *pop, void *dest, int c, size_t len, unsigned int flags);
-void pmemobj_persist(PMEMobjpool *pop, const void *addr, size_t len);
-int pmemobj_xpersist(PMEMobjpool *pop, const void *addr, size_t len, unsigned int flags);
-void pmemobj_flush(PMEMobjpool *pop, const void *addr, size_t len);
-int pmemobj_xflush(PMEMobjpool *pop, const void *addr, size_t len, unsigned int flags);
-void pmemobj_drain(PMEMobjpool *pop);
-const char *pmemobj_check_version(unsigned int major_required, unsigned int minor_required);
-void pmemobj_set_funcs(void *(*malloc_func)(size_t), void (*free_func)(void *), void *(*realloc_func)(void *, size_t), char *(*strdup_func)(const char *));
-typedef int (*pmemobj_constr)(PMEMobjpool *, void *, void *);
-void _pobj_debug_notice(const char *func_name, const char *file, int line);
-const char *pmemobj_errormsg();
-enum pobj_action_type {
-    POBJ_ACTION_TYPE_HEAP,
-    POBJ_ACTION_TYPE_MEM,
-    POBJ_MAX_ACTION_TYPE
-};
-struct pobj_action_heap {
-    uint64_t offset;
-};
-struct pobj_action {
-    enum pobj_action_type type;
-    uint32_t data[3];
-    union {
-        struct pobj_action_heap heap;
-        uint64_t data2[14];
-    };
-};
-PMEMoid pmemobj_reserve(PMEMobjpool *pop, struct pobj_action *act, size_t size, uint64_t type_num);
-PMEMoid pmemobj_xreserve(PMEMobjpool *pop, struct pobj_action *act, size_t size, uint64_t type_num, uint64_t flags);
-void pmemobj_set_value(PMEMobjpool *pop, struct pobj_action *act, uint64_t *ptr, uint64_t value);
-void pmemobj_defer_free(PMEMobjpool *pop, PMEMoid oid, struct pobj_action *act);
-int pmemobj_publish(PMEMobjpool *pop, struct pobj_action *actv, size_t actvcnt);
-int pmemobj_tx_publish(struct pobj_action *actv, size_t actvcnt);
-int pmemobj_tx_xpublish(struct pobj_action *actv, size_t actvcnt, uint64_t flags);
-void pmemobj_cancel(PMEMobjpool *pop, struct pobj_action *actv, size_t actvcnt);
-int pmemobj_alloc(PMEMobjpool *pop, PMEMoid *oidp, size_t size, uint64_t type_num, pmemobj_constr constructor, void *arg);
-int pmemobj_xalloc(PMEMobjpool *pop, PMEMoid *oidp, size_t size, uint64_t type_num, uint64_t flags, pmemobj_constr constructor, void *arg);
-int pmemobj_zalloc(PMEMobjpool *pop, PMEMoid *oidp, size_t size, uint64_t type_num);
-int pmemobj_realloc(PMEMobjpool *pop, PMEMoid *oidp, size_t size, uint64_t type_num);
-int pmemobj_zrealloc(PMEMobjpool *pop, PMEMoid *oidp, size_t size, uint64_t type_num);
-int pmemobj_strdup(PMEMobjpool *pop, PMEMoid *oidp, const char *s, uint64_t type_num);
-int pmemobj_wcsdup(PMEMobjpool *pop, PMEMoid *oidp, const wchar_t *s, uint64_t type_num);
-void pmemobj_free(PMEMoid *oidp);
-struct pobj_defrag_result {
-    size_t total;
-    size_t relocated;
-};
-int pmemobj_defrag(PMEMobjpool *pop, PMEMoid **oidv, size_t oidcnt, struct pobj_defrag_result *result);
-enum pobj_header_type {
-    POBJ_HEADER_LEGACY,
-    POBJ_HEADER_COMPACT,
-    POBJ_HEADER_NONE,
-    MAX_POBJ_HEADER_TYPES
-};
-struct pobj_alloc_class_desc {
-    size_t unit_size;
-    size_t alignment;
-    unsigned int units_per_block;
-    enum pobj_header_type header_type;
-    unsigned int class_id;
-};
-enum pobj_stats_enabled {
-    POBJ_STATS_ENABLED_TRANSIENT,
-    POBJ_STATS_ENABLED_BOTH,
-    POBJ_STATS_ENABLED_PERSISTENT,
-    POBJ_STATS_DISABLED
-};
-int pmemobj_ctl_get(PMEMobjpool *pop, const char *name, void *arg);
-int pmemobj_ctl_set(PMEMobjpool *pop, const char *name, void *arg);
-int pmemobj_ctl_exec(PMEMobjpool *pop, const char *name, void *arg);
-PMEMoid pmemobj_first(PMEMobjpool *pop);
-PMEMoid pmemobj_next(PMEMoid oid);
-static inline PMEMoid POBJ_FIRST_TYPE_NUM(PMEMobjpool *pop, uint64_t type_num) {
-    PMEMoid _pobj_ret = pmemobj_first(pop);
-    while (!((_pobj_ret).off == 0) && pmemobj_type_num(_pobj_ret) != type_num)
-        {
-            _pobj_ret = pmemobj_next(_pobj_ret);
-        }
-    return _pobj_ret;
-}
-static inline PMEMoid POBJ_NEXT_TYPE_NUM(PMEMoid o) {
-    PMEMoid _pobj_ret = o;
-    do {
-        _pobj_ret = pmemobj_next(_pobj_ret);
-    } while (!((_pobj_ret).off == 0) && pmemobj_type_num(_pobj_ret) != pmemobj_type_num(o));
-    return _pobj_ret;
-}
-int pmemobj_list_insert(PMEMobjpool *pop, size_t pe_offset, void *head, PMEMoid dest, int before, PMEMoid oid);
-PMEMoid pmemobj_list_insert_new(PMEMobjpool *pop, size_t pe_offset, void *head, PMEMoid dest, int before, size_t size, uint64_t type_num, pmemobj_constr constructor, void *arg);
-int pmemobj_list_remove(PMEMobjpool *pop, size_t pe_offset, void *head, PMEMoid oid, int free);
-int pmemobj_list_move(PMEMobjpool *pop, size_t pe_old_offset, void *head_old, size_t pe_new_offset, void *head_new, PMEMoid dest, int before, PMEMoid oid);
-struct tm {
-    int tm_sec;
-    int tm_min;
-    int tm_hour;
-    int tm_mday;
-    int tm_mon;
-    int tm_year;
-    int tm_wday;
-    int tm_yday;
-    int tm_isdst;
-    long tm_gmtoff;
-    const char *tm_zone;
-};
-struct itimerspec {
-    struct timespec it_interval;
-    struct timespec it_value;
-};
-struct sigevent;
-struct __locale_struct {
-    struct __locale_data *__locales[13];
-    const unsigned short *__ctype_b;
-    const int *__ctype_tolower;
-    const int *__ctype_toupper;
-    const char *__names[13];
-};
-typedef struct __locale_struct *__locale_t;
-typedef __locale_t locale_t;
-extern clock_t clock() __attribute__((nothrow));
-extern time_t time(time_t *__timer) __attribute__((nothrow));
-extern double difftime(time_t __time1, time_t __time0) __attribute__((nothrow)) __attribute__((const));
-extern time_t mktime(struct tm *__tp) __attribute__((nothrow));
-extern size_t strftime(char *__restrict __s, size_t __maxsize, const char *__restrict __format, const struct tm *__restrict __tp) __attribute__((nothrow));
-extern size_t strftime_l(char *__restrict __s, size_t __maxsize, const char *__restrict __format, const struct tm *__restrict __tp, locale_t __loc) __attribute__((nothrow));
-extern struct tm *gmtime(const time_t *__timer) __attribute__((nothrow));
-extern struct tm *localtime(const time_t *__timer) __attribute__((nothrow));
-extern struct tm *gmtime_r(const time_t *__restrict __timer, struct tm *__restrict __tp) __attribute__((nothrow));
-extern struct tm *localtime_r(const time_t *__restrict __timer, struct tm *__restrict __tp) __attribute__((nothrow));
-extern char *asctime(const struct tm *__tp) __attribute__((nothrow));
-extern char *ctime(const time_t *__timer) __attribute__((nothrow));
-extern char *asctime_r(const struct tm *__restrict __tp, char *__restrict __buf) __attribute__((nothrow));
-extern char *ctime_r(const time_t *__restrict __timer, char *__restrict __buf) __attribute__((nothrow));
-extern char *__tzname[2];
-extern int __daylight;
-extern long __timezone;
-extern char *tzname[2];
-extern void tzset() __attribute__((nothrow));
-extern int daylight;
-extern long timezone;
-extern time_t timegm(struct tm *__tp) __attribute__((nothrow));
-extern time_t timelocal(struct tm *__tp) __attribute__((nothrow));
-extern int dysize(int __year) __attribute__((nothrow)) __attribute__((const));
-extern int nanosleep(const struct timespec *__requested_time, struct timespec *__remaining);
-extern int clock_getres(clockid_t __clock_id, struct timespec *__res) __attribute__((nothrow));
-extern int clock_gettime(clockid_t __clock_id, struct timespec *__tp) __attribute__((nothrow));
-extern int clock_settime(clockid_t __clock_id, const struct timespec *__tp) __attribute__((nothrow));
-extern int clock_nanosleep(clockid_t __clock_id, int __flags, const struct timespec *__req, struct timespec *__rem);
-extern int clock_getcpuclockid(pid_t __pid, clockid_t *__clock_id) __attribute__((nothrow));
-extern int timer_create(clockid_t __clock_id, struct sigevent *__restrict __evp, timer_t *__restrict __timerid) __attribute__((nothrow));
-extern int timer_delete(timer_t __timerid) __attribute__((nothrow));
-extern int timer_settime(timer_t __timerid, int __flags, const struct itimerspec *__restrict __value, struct itimerspec *__restrict __ovalue) __attribute__((nothrow));
-extern int timer_gettime(timer_t __timerid, struct itimerspec *__value) __attribute__((nothrow));
-extern int timer_getoverrun(timer_t __timerid) __attribute__((nothrow));
-extern int timespec_get(struct timespec *__ts, int __base) __attribute__((nothrow)) __attribute__((nonnull(1)));
-typedef union {
-    long long align;
-    char padding[64];
-} PMEMmutex;
-typedef union {
-    long long align;
-    char padding[64];
-} PMEMrwlock;
-typedef union {
-    long long align;
-    char padding[64];
-} PMEMcond;
-void pmemobj_mutex_zero(PMEMobjpool *pop, PMEMmutex *mutexp);
-int pmemobj_mutex_lock(PMEMobjpool *pop, PMEMmutex *mutexp);
-int pmemobj_mutex_timedlock(PMEMobjpool *pop, PMEMmutex *__restrict mutexp, const struct timespec *__restrict abs_timeout);
-int pmemobj_mutex_trylock(PMEMobjpool *pop, PMEMmutex *mutexp);
-int pmemobj_mutex_unlock(PMEMobjpool *pop, PMEMmutex *mutexp);
-void pmemobj_rwlock_zero(PMEMobjpool *pop, PMEMrwlock *rwlockp);
-int pmemobj_rwlock_rdlock(PMEMobjpool *pop, PMEMrwlock *rwlockp);
-int pmemobj_rwlock_wrlock(PMEMobjpool *pop, PMEMrwlock *rwlockp);
-int pmemobj_rwlock_timedrdlock(PMEMobjpool *pop, PMEMrwlock *__restrict rwlockp, const struct timespec *__restrict abs_timeout);
-int pmemobj_rwlock_timedwrlock(PMEMobjpool *pop, PMEMrwlock *__restrict rwlockp, const struct timespec *__restrict abs_timeout);
-int pmemobj_rwlock_tryrdlock(PMEMobjpool *pop, PMEMrwlock *rwlockp);
-int pmemobj_rwlock_trywrlock(PMEMobjpool *pop, PMEMrwlock *rwlockp);
-int pmemobj_rwlock_unlock(PMEMobjpool *pop, PMEMrwlock *rwlockp);
-void pmemobj_cond_zero(PMEMobjpool *pop, PMEMcond *condp);
-int pmemobj_cond_broadcast(PMEMobjpool *pop, PMEMcond *condp);
-int pmemobj_cond_signal(PMEMobjpool *pop, PMEMcond *condp);
-int pmemobj_cond_timedwait(PMEMobjpool *pop, PMEMcond *__restrict condp, PMEMmutex *__restrict mutexp, const struct timespec *__restrict abs_timeout);
-int pmemobj_cond_wait(PMEMobjpool *pop, PMEMcond *condp, PMEMmutex *__restrict mutexp);
-PMEMobjpool *pmemobj_open(const char *path, const char *layout);
-PMEMobjpool *pmemobj_create(const char *path, const char *layout, size_t poolsize, mode_t mode);
-int pmemobj_check(const char *path, const char *layout);
-void pmemobj_close(PMEMobjpool *pop);
-PMEMoid pmemobj_root(PMEMobjpool *pop, size_t size);
-PMEMoid pmemobj_root_construct(PMEMobjpool *pop, size_t size, pmemobj_constr constructor, void *arg);
-size_t pmemobj_root_size(PMEMobjpool *pop);
-void pmemobj_set_user_data(PMEMobjpool *pop, void *data);
-void *pmemobj_get_user_data(PMEMobjpool *pop);
-extern void *memcpy(void *__restrict __dest, const void *__restrict __src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern void *memmove(void *__dest, const void *__src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern void *memccpy(void *__restrict __dest, const void *__restrict __src, int __c, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern void *memset(void *__s, int __c, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern int memcmp(const void *__s1, const void *__s2, size_t __n) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern void *memchr(const void *__s, int __c, size_t __n) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern char *strcpy(char *__restrict __dest, const char *__restrict __src) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *strncpy(char *__restrict __dest, const char *__restrict __src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *strcat(char *__restrict __dest, const char *__restrict __src) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *strncat(char *__restrict __dest, const char *__restrict __src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern int strcmp(const char *__s1, const char *__s2) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern int strncmp(const char *__s1, const char *__s2, size_t __n) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern int strcoll(const char *__s1, const char *__s2) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern unsigned long strxfrm(char *__restrict __dest, const char *__restrict __src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(2)));
-extern int strcoll_l(const char *__s1, const char *__s2, locale_t __l) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2, 3)));
-extern size_t strxfrm_l(char *__dest, const char *__src, size_t __n, locale_t __l) __attribute__((nothrow)) __attribute__((nonnull(2, 4)));
-extern char *strdup(const char *__s) __attribute__((nothrow)) __attribute__((malloc)) __attribute__((nonnull(1)));
-extern char *strndup(const char *__string, size_t __n) __attribute__((nothrow)) __attribute__((malloc)) __attribute__((nonnull(1)));
-extern char *strchr(const char *__s, int __c) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern char *strrchr(const char *__s, int __c) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern unsigned long strcspn(const char *__s, const char *__reject) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern unsigned long strspn(const char *__s, const char *__accept) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern char *strpbrk(const char *__s, const char *__accept) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern char *strstr(const char *__haystack, const char *__needle) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern char *strtok(char *__restrict __s, const char *__restrict __delim) __attribute__((nothrow)) __attribute__((nonnull(2)));
-extern char *__strtok_r(char *__restrict __s, const char *__restrict __delim, char **__restrict __save_ptr) __attribute__((nothrow)) __attribute__((nonnull(2, 3)));
-extern char *strtok_r(char *__restrict __s, const char *__restrict __delim, char **__restrict __save_ptr) __attribute__((nothrow)) __attribute__((nonnull(2, 3)));
-extern unsigned long strlen(const char *__s) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern size_t strnlen(const char *__string, size_t __maxlen) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern char *strerror(int __errnum) __attribute__((nothrow));
-extern int strerror_r(int __errnum, char *__buf, size_t __buflen) asm("__xpg_strerror_r") __attribute__((nothrow)) __attribute__((nonnull(2)));
-extern char *strerror_l(int __errnum, locale_t __l) __attribute__((nothrow));
-extern int bcmp(const void *__s1, const void *__s2, size_t __n) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern void bcopy(const void *__src, void *__dest, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern void bzero(void *__s, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern char *index(const char *__s, int __c) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern char *rindex(const char *__s, int __c) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1)));
-extern int ffs(int __i) __attribute__((nothrow)) __attribute__((const));
-extern int ffsl(long __l) __attribute__((nothrow)) __attribute__((const));
-extern int ffsll(long long __ll) __attribute__((nothrow)) __attribute__((const));
-extern int strcasecmp(const char *__s1, const char *__s2) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern int strncasecmp(const char *__s1, const char *__s2, size_t __n) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2)));
-extern int strcasecmp_l(const char *__s1, const char *__s2, locale_t __loc) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2, 3)));
-extern int strncasecmp_l(const char *__s1, const char *__s2, size_t __n, locale_t __loc) __attribute__((nothrow)) __attribute__((pure)) __attribute__((nonnull(1, 2, 4)));
-extern void explicit_bzero(void *__s, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1)));
-extern char *strsep(char **__restrict __stringp, const char *__restrict __delim) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *strsignal(int __sig) __attribute__((nothrow));
-extern char *__stpcpy(char *__restrict __dest, const char *__restrict __src) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *stpcpy(char *__restrict __dest, const char *__restrict __src) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *__stpncpy(char *__restrict __dest, const char *__restrict __src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-extern char *stpncpy(char *__restrict __dest, const char *__restrict __src, size_t __n) __attribute__((nothrow)) __attribute__((nonnull(1, 2)));
-typedef long __jmp_buf[8];
-struct __jmp_buf_tag {
-    __jmp_buf __jmpbuf;
-    int __mask_was_saved;
-    __sigset_t __saved_mask;
-};
-typedef struct __jmp_buf_tag jmp_buf[1];
-extern int setjmp(jmp_buf __env) __attribute__((nothrow));
-extern int __sigsetjmp(struct __jmp_buf_tag __env[1], int __savemask) __attribute__((nothrow));
-extern int _setjmp(struct __jmp_buf_tag __env[1]) __attribute__((nothrow));
-extern void longjmp(struct __jmp_buf_tag __env[1], int __val) __attribute__((nothrow));
-extern void _longjmp(struct __jmp_buf_tag __env[1], int __val) __attribute__((nothrow));
-typedef struct __jmp_buf_tag sigjmp_buf[1];
-extern void siglongjmp(sigjmp_buf __env, int __val) __attribute__((nothrow));
-enum pobj_tx_stage {
-    TX_STAGE_NONE,
-    TX_STAGE_WORK,
-    TX_STAGE_ONCOMMIT,
-    TX_STAGE_ONABORT,
-    TX_STAGE_FINALLY,
-    MAX_TX_STAGE
-};
-enum pobj_tx_stage pmemobj_tx_stage();
-enum pobj_tx_param {
-    TX_PARAM_NONE,
-    TX_PARAM_MUTEX,
-    TX_PARAM_RWLOCK,
-    TX_PARAM_CB
-};
-enum pobj_log_type {
-    TX_LOG_TYPE_SNAPSHOT,
-    TX_LOG_TYPE_INTENT
-};
-enum __attribute__((deprecated("enum pobj_tx_lock is deprecated, use enum pobj_tx_param"))) pobj_tx_lock {
-    TX_LOCK_NONE __attribute__((deprecated("enum pobj_tx_lock is deprecated, use enum pobj_tx_param"))) = TX_PARAM_NONE,
-    TX_LOCK_MUTEX __attribute__((deprecated("enum pobj_tx_lock is deprecated, use enum pobj_tx_param"))) = TX_PARAM_MUTEX,
-    TX_LOCK_RWLOCK __attribute__((deprecated("enum pobj_tx_lock is deprecated, use enum pobj_tx_param"))) = TX_PARAM_RWLOCK
-};
-typedef void (*pmemobj_tx_callback)(PMEMobjpool *, enum pobj_tx_stage, void *);
-int pmemobj_tx_begin(PMEMobjpool *pop, jmp_buf env, ...);
-int pmemobj_tx_xlock(enum pobj_tx_param type, void *lockp, uint64_t flags);
-int pmemobj_tx_lock(enum pobj_tx_param type, void *lockp);
-void pmemobj_tx_abort(int errnum);
-void pmemobj_tx_commit();
-int pmemobj_tx_end();
-void pmemobj_tx_process();
-int pmemobj_tx_errno();
-int pmemobj_tx_add_range(PMEMoid oid, uint64_t off, size_t size);
-int pmemobj_tx_add_range_direct(const void *ptr, size_t size);
-int pmemobj_tx_xadd_range(PMEMoid oid, uint64_t off, size_t size, uint64_t flags);
-int pmemobj_tx_xadd_range_direct(const void *ptr, size_t size, uint64_t flags);
-PMEMoid pmemobj_tx_alloc(size_t size, uint64_t type_num);
-PMEMoid pmemobj_tx_xalloc(size_t size, uint64_t type_num, uint64_t flags);
-PMEMoid pmemobj_tx_zalloc(size_t size, uint64_t type_num);
-PMEMoid pmemobj_tx_realloc(PMEMoid oid, size_t size, uint64_t type_num);
-PMEMoid pmemobj_tx_zrealloc(PMEMoid oid, size_t size, uint64_t type_num);
-PMEMoid pmemobj_tx_strdup(const char *s, uint64_t type_num);
-PMEMoid pmemobj_tx_xstrdup(const char *s, uint64_t type_num, uint64_t flags);
-PMEMoid pmemobj_tx_wcsdup(const wchar_t *s, uint64_t type_num);
-PMEMoid pmemobj_tx_xwcsdup(const wchar_t *s, uint64_t type_num, uint64_t flags);
-int pmemobj_tx_free(PMEMoid oid);
-int pmemobj_tx_xfree(PMEMoid oid, uint64_t flags);
-int pmemobj_tx_log_append_buffer(enum pobj_log_type type, void *addr, size_t size);
-int pmemobj_tx_xlog_append_buffer(enum pobj_log_type type, void *addr, size_t size, uint64_t flags);
-int pmemobj_tx_log_auto_alloc(enum pobj_log_type type, int on_off);
-size_t pmemobj_tx_log_snapshots_max_size(size_t *sizes, size_t nsizes);
-size_t pmemobj_tx_log_intents_max_size(size_t nintents);
-void pmemobj_tx_set_user_data(void *data);
-void *pmemobj_tx_get_user_data();
-static inline pmemobj_tx_callback _pobj_validate_cb_sig(pmemobj_tx_callback cb) {
-    return cb;
-}
-static inline void *TX_MEMCPY(void *dest, const void *src, size_t num) {
-    pmemobj_tx_add_range_direct(dest, num);
-    return memcpy(dest, src, num);
-}
-static inline void *TX_MEMSET(void *dest, int c, size_t num) {
-    pmemobj_tx_add_range_direct(dest, num);
-    return memset(dest, c, num);
-}
 typedef unsigned long pm_region_offset;
 typedef unsigned long pm_region_id;
 typedef unsigned short pm_region_reference_id;
@@ -991,185 +433,31 @@ void pm_copy(void *pm_ptr, char *data, int size);
 void pm_close_reg(pm_region_reference_id reference_id);
 void pm_close();
 extern PmBackend PMDK_BACKEND;
-struct entry {
-    uint64_t key;
-    int value;
-    struct entry *next;
+struct holder {
+    int values[10000];
 };
-struct buckets {
-    size_t nbuckets;
-    struct entry *bucket[];
-};
-struct hashmap_tx {
-    uint32_t seed;
-    uint32_t hash_fun_a;
-    uint32_t hash_fun_b;
-    uint64_t hash_fun_p;
-    uint64_t count;
-    struct buckets *buckets;
-};
-static void create_hashmap(struct hashmap_tx *hashmap, uint32_t seed) {
-    size_t len = 10;
-    size_t sz = sizeof(struct buckets) + len * sizeof(struct entry *);
-    hashmap->seed = seed;
-    do {
-        hashmap->hash_fun_a = (uint32_t)rand();
-    } while (hashmap->hash_fun_a == 0);
-    hashmap->hash_fun_b = (uint32_t)rand();
-    hashmap->hash_fun_p = 32212254719ULL;
-    hashmap->buckets = (struct buckets *)pm_alloc(sizeof(struct buckets) * sz);
-    if (!hashmap->buckets) {
-        return;
-    }
-    hashmap->buckets->nbuckets = len;
-}
-static uint64_t hash(struct hashmap_tx *hashmap, const struct buckets *buckets, uint64_t value) {
-    uint32_t a = hashmap->hash_fun_a;
-    uint32_t b = hashmap->hash_fun_b;
-    uint64_t p = hashmap->hash_fun_p;
-    size_t len = buckets->nbuckets;
-    return ((a * value + b) % p) % len;
-}
-static void hm_tx_rebuild(struct hashmap_tx *hashmap, size_t new_len) {
-    struct buckets *buckets_old = hashmap->buckets;
-    if (new_len == 0)
-        new_len = buckets_old->nbuckets;
-    size_t sz_old = sizeof(struct buckets) + buckets_old->nbuckets * sizeof(struct entry *);
-    size_t sz_new = sizeof(struct buckets) + new_len * sizeof(struct entry *);
-    struct buckets *buckets_new = (struct buckets *)pm_alloc(sizeof(struct buckets) * sz_new);
-    if (!buckets_new) {
-        return;
-    }
-    buckets_new->nbuckets = new_len;
-    for (size_t i = 0; i < buckets_old->nbuckets; ++i) {
-        while (!buckets_old->bucket[i])
-            {
-                struct entry *en = buckets_old->bucket[i];
-                uint64_t h = hash(hashmap, buckets_new, en->key);
-                buckets_old->bucket[i] = en->next;
-                en->next = buckets_new->bucket[h];
-                buckets_new->bucket[h] = en;
-            }
-    }
-    hashmap->buckets = buckets_new;
-    pm_free(buckets_old);
-}
-int hm_tx_insert(struct hashmap_tx *hashmap, uint64_t key, int value) {
-    struct buckets *buckets = hashmap->buckets;
-    struct entry *var;
-    uint64_t h = hash(hashmap, buckets, key);
-    int num = 0;
-    for (var = buckets->bucket[h]; var != ((void *)0); var = var->next) {
-        if (var->key == key)
-            return 1;
-        num++;
-    }
-    int ret = 0;
-    struct entry *e = (struct entry *)pm_alloc(sizeof(struct entry));
-    if (!e) {
-        return -1;
-    }
-    e->key = key;
-    e->value = value;
-    e->next = buckets->bucket[h];
-    buckets->bucket[h] = e;
-    hashmap->count++;
-    num++;
-    if (ret)
-        return ret;
-    if (num > 10 || (num > 5 && hashmap->count > 2 * buckets->nbuckets))
-        hm_tx_rebuild(hashmap, buckets->nbuckets * 2);
-    return 0;
-}
-int hm_tx_remove(struct hashmap_tx *hashmap, uint64_t key) {
-    struct buckets *buckets = hashmap->buckets;
-    struct entry *var, *prev = ((void *)0);
-    uint64_t h = hash(hashmap, buckets, key);
-    for (var = buckets->bucket[h]; var != ((void *)0); prev = var , var = var->next) {
-        if (var->key == key) {
-            break;
-        }
-    }
-    if (var == ((void *)0)) {
-        return 0;
-    }
-    int ret = 0;
-    int retoid = var->value;
-    if (prev == ((void *)0)) {
-        buckets->bucket[h] = var->next;
-    } else {
-        prev->next = var->next;
-    }
-    hashmap->count--;
-    pm_free(var);
-    if (ret) {
-        return 0;
-    }
-    if (hashmap->count < buckets->nbuckets) {
-        hm_tx_rebuild(hashmap, buckets->nbuckets / 2);
-    }
-    return retoid;
-}
-static void hm_tx_debug(struct hashmap_tx *hashmap) {
-    struct buckets *buckets = hashmap->buckets;
-    struct entry *var;
-    printf("a: %u b: %u p: %lu\n", hashmap->hash_fun_a, hashmap->hash_fun_b, hashmap->hash_fun_p);
-    printf("count: %lu, buckets: %zu\n", hashmap->count, buckets->nbuckets);
-    for (size_t i = 0; i < buckets->nbuckets; ++i) {
-        if (buckets->bucket[i] != ((void *)0))
-            continue;
-        int num = 0;
-        printf("%zu: ", i);
-        for (var = buckets->bucket[i]; var != ((void *)0); var = var->next) {
-            printf("%lu ", var->key);
-            num++;
-        }
-        printf("(%d)\n", num);
-    }
-}
-int hm_tx_get(struct hashmap_tx *hashmap, uint64_t key) {
-    struct buckets *buckets = hashmap->buckets;
-    struct entry *var;
-    uint64_t h = hash(hashmap, buckets, key);
-    for (var = buckets->bucket[h]; var != ((void *)0); var = var->next)
-        if (var->key == key)
-            return var->value;
-    return 0;
-}
-int hm_tx_lookup(struct hashmap_tx *hashmap, uint64_t key) {
-    struct buckets *buckets = hashmap->buckets;
-    struct entry *var;
-    uint64_t h = hash(hashmap, buckets, key);
-    for (var = buckets->bucket[h]; var != ((void *)0); var = var->next)
-        if (var->key == key)
-            return 1;
-    return 0;
-}
-size_t hm_tx_count(struct hashmap_tx *hashmap) {
-    return hashmap->count;
-}
-int hm_tx_init(struct hashmap_tx *hashmap) {
-    srand(hashmap->seed);
-    return 0;
-}
-int main(int argc, char **argv) {
-    if (argc < 3) {
-        return 0;
-    }
-    PmRegionConfig main_region_config = {.file_path = argv[1], .root_size = sizeof(struct hashmap_tx)};
+static struct holder *root;
+int pm_store_init(char *path) {
+    PmRegionConfig main_region_config = {.file_path = path, .root_size = sizeof(struct holder)};
     PmWrapperConfig config = {.backend = &PMDK_BACKEND, .main_region_config = main_region_config};
     if (pm_init(config) != 0) {
         return 1;
     }
     ;
-    struct hashmap_tx *root = (struct hashmap_tx *)pm_get_root();
-    create_hashmap(root, 234);
-    int a = 5;
-    hm_tx_insert(root, 10, 5);
-    hm_tx_insert(root, 20, 10);
-    hm_tx_insert(root, 30, 50);
-    hm_tx_insert(root, 40, 90);
-    hm_tx_debug(root);
+    root = (struct holder *)pm_get_root();
+}
+void pm_store_run() {
+    int rounds = 1000;
+    for (int i = 0; i < 10000 * 100000; i++) {
+        root->values[i % rounds] = i;
+    }
+}
+void pm_store_close() {
     pm_close();
+}
+int main() {
+    pm_store_init("t");
+    pm_store_run();
+    pm_store_close();
     return 0;
 }
