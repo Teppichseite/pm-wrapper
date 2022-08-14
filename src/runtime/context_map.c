@@ -2,10 +2,13 @@
 #include "./hashmap/hashmap.h"
 #include "pm_wrapper.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static HASHMAP(pm_region_reference_id, PmBackendContext) context_map;
 
 static PmBackendContext *main_context = NULL;
+
+static PmBackendContext **contexts;
 
 static size_t reference_id_hash(const pm_region_reference_id *id) {
   return hashmap_hash_default(&id, sizeof(pm_region_reference_id *));
@@ -18,6 +21,8 @@ static int reference_id_cmp(const pm_region_reference_id *id1,
 
 void cm_init() {
   hashmap_init(&context_map, reference_id_hash, reference_id_cmp);
+  contexts =
+      (PmBackendContext **)malloc((2 << 16) * sizeof(PmBackendContext *));
 }
 
 PmBackendContext *cm_get_context(pm_region_reference_id reference_id) {
@@ -25,8 +30,7 @@ PmBackendContext *cm_get_context(pm_region_reference_id reference_id) {
     return main_context;
   }
 
-  return (PmBackendContext *)hashmap_get(
-      &context_map, (pm_region_reference_id *)(unsigned long)reference_id);
+  return contexts[reference_id];
 }
 
 int cm_insert_context(pm_region_reference_id reference_id,
@@ -36,14 +40,10 @@ int cm_insert_context(pm_region_reference_id reference_id,
     main_context = context;
   }
 
-  hashmap_put(&context_map,
-              (pm_region_reference_id *)(unsigned long)reference_id, context);
+  contexts[reference_id] = context;
   return 0;
 }
 
-void cm_remove_context(pm_region_reference_id reference_id) {
-  hashmap_remove(&context_map,
-                 (pm_region_reference_id *)(unsigned long)reference_id);
-}
+void cm_remove_context(pm_region_reference_id reference_id) {}
 
-void cm_free() { hashmap_cleanup(&context_map); }
+void cm_free() { free(contexts); }

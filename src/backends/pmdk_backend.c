@@ -1,6 +1,7 @@
 #include "../runtime/pm_wrapper.h"
 #include "pmdk_backend.h"
 #include <libpmemobj.h>
+#include <libpmemobj/base.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -84,7 +85,6 @@ static void *read_object(PmBackendContext *context, pm_region_offset offset)
 static void write_object(PmBackendContext *context, void *dst, char *data, size_t len)
 {
     pmemobj_memcpy_persist(POOL(context), dst, data, len);
-    //memcpy(dst, data, len);
 }
 
 PmBackend PMDK_BACKEND = {

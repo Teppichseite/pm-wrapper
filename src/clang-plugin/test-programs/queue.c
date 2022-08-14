@@ -22,6 +22,8 @@ struct root {
   struct queue *queue;
 };
 
+static struct root *root;
+
 /*
  * queue_new -- allocates a new queue container using the atomic API
  */
@@ -132,12 +134,10 @@ fail(const char *msg) {
   exit(EXIT_FAILURE);
 }
 
-int main(int argc, char *argv[]) {
-  enum queue_op op;
-  if (argc < 3 || (op = queue_op_parse(argv[2])) == UNKNOWN_QUEUE_OP)
-    fail("usage: file-name [new <n>|show|enqueue <data>|dequeue]");
+int size = 10000;
 
-  PmRegionConfig main_region_config = {.file_path = argv[1],
+int pm_wrapper_init(char *path) {
+  PmRegionConfig main_region_config = {.file_path = path,
                                        .root_size = sizeof(struct root)};
 
   PmWrapperConfig config = {.backend = &PMDK_BACKEND,
@@ -147,52 +147,25 @@ int main(int argc, char *argv[]) {
     return 1;
   };
 
-  struct root *rootp = (struct root *)pm_get_root();
-
-  size_t capacity;
-
-  switch (op) {
-  case QUEUE_NEW:
-    if (argc != 4)
-      fail("missing size of the queue");
-
-    char *end;
-    errno = 0;
-    capacity = strtoull(argv[3], &end, 0);
-    if (errno == ERANGE || *end != '\0')
-      fail("invalid size of the queue");
-
-    if ((rootp->queue = queue_new(capacity)) == NULL)
-      fail("failed to create a new queue");
-    break;
-  case QUEUE_ENQUEUE:
-    if (argc != 4)
-      fail("missing new entry data");
-
-    if (rootp->queue == NULL)
-      fail("queue must exist");
-
-    if (queue_enqueue(rootp->queue, argv[3], strlen(argv[3]) + 1) != 0)
-      fail("failed to insert new entry");
-    break;
-  case QUEUE_DEQUEUE:
-    if (rootp->queue == NULL)
-      fail("queue must exist");
-
-    if (queue_dequeue(rootp->queue) != 0)
-      fail("failed to remove entry");
-    break;
-  case QUEUE_SHOW:
-    if (rootp->queue == NULL)
-      fail("queue must exist");
-
-    queue_show(rootp->queue);
-    break;
-  default:
-    break;
+  root = (struct root *)pm_get_root();
+  if ((root->queue = queue_new(10)) != 0) {
+    fail("failed to create a new queue");
   }
+  return 0;
+}
+void pm_wrapper_run() {
+  for (int i = 0; i < size; i++) {
+    queue_enqueue(root->queue, "hello", 6);
+  }
+  for (int i = 0; i < size; i++) {
+    queue_dequeue(root->queue);
+  }
+}
+void pm_wrapper_close() { pm_wrapper_close(); }
 
-  pm_close();
-
+int main(int argc, char *argv[]) {
+  pm_wrapper_init("");
+  pm_wrapper_run();
+  pm_wrapper_close();
   return 0;
 }
