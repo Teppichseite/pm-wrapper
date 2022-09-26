@@ -21,6 +21,7 @@
 #include <llvm-13/llvm/Support/CommandLine.h>
 #include <llvm-13/llvm/Support/raw_ostream.h>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -92,42 +93,33 @@ customFrontendActionFactory(clang::Rewriter &rewriter) {
   return std::make_unique<CustomFrontendActionFactory>(rewriter);
 }
 
-void evaluatePointers(clang::tooling::ClangTool &tool,
-                      llvm::Expected<clang::tooling::CommonOptionsParser> &op,
-                      clang::ASTContext &context) {
+int compile(clang::tooling::ClangTool &tool,
+            llvm::Expected<clang::tooling::CommonOptionsParser> &op,
+            clang::ASTContext &context) {
   clang::Rewriter rewriter;
   auto evaluateAction = customFrontendActionFactory(rewriter);
   tool.run(evaluateAction.get());
-}
 
-void storeExpandedVersion(clang::ASTContext &context) {
-  std::error_code errorCode;
-  llvm::raw_fd_ostream stream("./test_abc.c", errorCode);
-  clang::LangOptions options;
-  clang::PrintingPolicy policy(options);
-  options.CPlusPlus = false;
-  policy.Bool = false;
-  policy.Nullptr = true;
-  context.getTranslationUnitDecl()->print(stream, policy);
-  stream.flush();
-  stream.close();
-}
-
-void performRewrite() {
-  clang::tooling::FixedCompilationDatabase database("./", {});
-
-  clang::tooling::ClangTool tool(database, {"./test_abc.c"});
-
-  clang::Rewriter rewriter;
-  auto writeAction = customFrontendActionFactory(rewriter);
-  tool.run(writeAction.get());
+  auto outputPath = std::getenv("PM_WRAPPER_OUTPUT_PATH");
+  if (!outputPath) {
+    llvm::errs() << "Please specify env variable PM_WRAPPER_OUTPUT_PATH! \n";
+    return 1;
+  }
+  auto outputFile = std::string{outputPath} + "/output.c";
 
   std::error_code errorCode;
-  llvm::raw_fd_ostream stream("./test_abc_out.c", errorCode);
+  llvm::raw_fd_ostream stream(outputFile, errorCode);
   rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(stream);
   stream.flush();
   stream.close();
+
+  auto cmd = "clang-13 -c " + outputFile + " -o " + outputPath + "/output.o";
+  system(cmd.c_str());
+  return 0;
 }
+
+static clang::ParsedAttrInfoRegistry::Add<PointerTypeAttribute>
+    Z("pointer-type-attribute", "Pointer type attribute");
 
 int main(int argc, const char **argv) {
 
@@ -141,11 +133,5 @@ int main(int argc, const char **argv) {
 
   auto &context = asts[0]->getASTContext();
 
-  evaluatePointers(tool, op, context);
-
-  storeExpandedVersion(context);
-
-  performRewrite();
-
-  return 0;
+  return compile(tool, op, context);
 }

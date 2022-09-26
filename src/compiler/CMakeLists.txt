@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4.3)
-project(pm-wrapper-clang-plugin)
+project(pm-wrapper-compiler)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -43,13 +43,13 @@ file(GLOB SOURCES "./*.cpp")
 # target_link_libraries(PmWrapperClangPlugin
 # "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>" "stdc++fs")
 add_executable(
-  PmWrapperClangPlugin
+  PmWrapperCompiler
   ${SOURCES}
 )
 
 # Link with libclangTooling
 target_link_libraries(
-  PmWrapperClangPlugin
+  PmWrapperCompiler
   "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>" "stdc++fs"
   clangTooling
 )

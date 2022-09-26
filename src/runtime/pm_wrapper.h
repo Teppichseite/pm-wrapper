@@ -79,6 +79,9 @@ void pm_copy(void *pm_ptr, char *data, int size);
 void pm_close_reg(pm_region_reference_id reference_id);
 void pm_close();
 
+#define PM __attribute__((pointer_type(1)))
+#define VM __attribute__((pointer_type(2)))
+
 #define MAIN_REGION_REFERENCE_ID 1
 
 #endif

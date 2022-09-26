@@ -2,9 +2,10 @@
 /.vscode
 /bin
 
-/src/clang-plugin/build
-/src/clang-plugin/.cache
-/src/clang-plugin/.vscode
+/src/compiler/test-programs/.cache
+/src/compiler/build
+/src/compiler/.cache
+/src/compiler/.vscode
 
 /src/vscode-extension/node_modules/
 /src/vscode-extension/out/

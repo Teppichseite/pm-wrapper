@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#define PM __attribute__((pointer_type(1)))
 #include "../../../src/backends/pmdk_backend.h"
 #include "../../runtime/pm_wrapper.h"
 #include <inttypes.h>
@@ -69,8 +67,6 @@ static void btree_foreach(struct btree *btree, struct btree_node *node,
   if (node == NULL) {
     return;
   }
-
-  node->key += 10;
 
   btree_foreach(btree, node->slots[0], cb);
 

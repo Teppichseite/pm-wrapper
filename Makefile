@@ -7,7 +7,6 @@ PM_ATLAS_BACKEND = ./src/backends/atlas_backend.c ../Atlas/runtime/Atlas-Build/l
 
 pmdk: ./bin/multiple_region_pmdk
 atlas: ./bin/multiple_region_atlas
-store: ./bin/store
 
 ./bin/multiple_region_pmdk: ./src/tests/multiple_region/multiple_region_pmdk.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND)
 	mkdir ./bin -p
@@ -17,9 +16,9 @@ store: ./bin/store
 	mkdir ./bin -p
 	$(CC) ./src/tests/multiple_region/multiple_region_atlas.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_WRAPPER_TEST_FILES) $(PM_ATLAS_BACKEND) $(CFLAGS) -o ./bin/multiple_region_atlas
 
-./bin/store: ./src/tests/store/store.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND)
+./bin/btree: ./src/tests/output.o $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND)
 	mkdir ./bin -p
-	$(CC) ./src/tests/store/store.c $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND) $(CFLAGS) -o ./bin/store
+	$(CC) ./src/tests/output.o $(PM_WRAPPER_RUNTIME_FILES) $(PM_PMDK_BACKEND) $(CFLAGS) -o ./bin/btree
 
 clean:
 	rm ./bin/*
@@ -29,5 +28,11 @@ build_docker:
 
 run_docker:
 	docker run -t test-atlas
+
+build_compiler:
+	mkdir ./src/compiler/build -p
+	(cd ./src/compiler/build && cmake ..)
+	(cd ./src/compiler/build && make)
+
 
 

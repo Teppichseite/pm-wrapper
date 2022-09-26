@@ -101,9 +101,6 @@ std::string diagnosticLevelToString(clang::DiagnosticsEngine::Level level) {
 }
 
 void VarManager::printPretty() {
-  llvm::outs() << "\nOptions: \n";
-  llvm::outs() << "Source path: " << options.sourcePath << "\n\n";
-
   llvm::outs() << "Variables: \n";
   for (auto entry : variables) {
     auto decl = entry.first;

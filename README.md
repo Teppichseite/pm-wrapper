@@ -6,8 +6,13 @@ Developers can write one program and can switch out the pm library in the backgr
 ## Required dependencies
 - make
 - docker
+- clang-13
 
-## Run Tests
+## Build compiler
+- Run `make build_compiler`
+- Compiler is located at `src/build/PmWrapperCompiler`
+
+## Run runtime tests
 - Run `make build_docker`
 - Run `make run_docker`
 

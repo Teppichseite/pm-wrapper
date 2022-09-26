@@ -213,8 +213,6 @@ bool ExpressionWriter::VisitCallExpr(clang::CallExpr *expr) {
     auto funcDecl = expr->getDirectCallee();
     if (funcDecl && (!varManager.isSymbolPartOfSource(funcDecl) &&
                      !varManager.isFunctionSet(funcDecl))) {
-
-      llvm::outs() << funcDecl->getNameAsString() << "\n";
       wrapReadCall(arg);
     } else {
       TraverseStmt(arg);

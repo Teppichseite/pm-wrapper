@@ -68,8 +68,6 @@ void GlobalEvaluator::evaluateUncalledFunctions() {
     auto uncalledFunc = uncalledFunctions.top();
     uncalledFunctions.pop();
 
-    llvm::outs() << uncalledFunc->getNameAsString() << "\n";
-
     if (!hasPointerTypeAttribute(uncalledFunc) &&
         uncalledFunc->getReturnType()->isPointerType()) {
       varManager.reportError(
