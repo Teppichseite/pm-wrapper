@@ -75,17 +75,14 @@ const parseClangRepsonse = (response: string) => {
 	};
 }
 
-const getClangCommand = (fileName: string) => {
-	const pmWrapperPath = "/home/teppichseite/development/thesis/pm-wrapper/src";
-	const parts = [
-		`clang-13 -Xclang -load -Xclang ${pmWrapperPath}/clang-plugin/build/libPmWrapperClangPlugin.so`,
-		'-Xclang -plugin -Xclang pm-wrapper-clang-plugin',
-		'-Xclang -plugin-arg-pm-wrapper-clang-plugin -Xclang -source-path',
-		'-Xclang -plugin-arg-pm-wrapper-clang-plugin',
-		`-Xclang ${pmWrapperPath}/clang-plugin/test-programs ${fileName} -c`
-	];
-
-	return parts.join(" ");
+const getBuildCommand = (fileName: string) => {
+	// Fix hardcoded path
+	const pmWrapperPath = "/home/teppichseite/development/thesis/pm-wrapper/PmWrapperCompiler";
+	return [
+		'PM_WRAPPER_OUTPUT_PATH=/tmp/output',
+		`${pmWrapperPath}`,
+		fileName
+	].join(" ");
 }
 
 const runCommand = (command: string) => new Promise<string>((resolve) => exec(command,
@@ -98,7 +95,7 @@ const runCommand = (command: string) => new Promise<string>((resolve) => exec(co
 	}));
 
 const getClangResponse = async (fileName: string) => {
-	const command = getClangCommand(fileName);
+	const command = getBuildCommand(fileName);
 	const result = await runCommand(command).catch(err => err);
 	return parseClangRepsonse(result);
 }

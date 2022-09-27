@@ -18,6 +18,7 @@
 	"main": "./out/extension.js",
 	"contributes": {},
 	"scripts": {
+		"package": "npm i && npm run compile && vsce package && mv ./pmwrappersense-0.0.1.vsix ../../bin/pmwrappersense.vsix",
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",

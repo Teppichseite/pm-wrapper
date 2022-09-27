@@ -9,3 +9,5 @@
 
 /src/vscode-extension/node_modules/
 /src/vscode-extension/out/
+
+/out

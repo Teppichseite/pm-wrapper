@@ -105,7 +105,7 @@ int compile(clang::tooling::ClangTool &tool,
     llvm::errs() << "Please specify env variable PM_WRAPPER_OUTPUT_PATH! \n";
     return 1;
   }
-  auto outputFile = std::string{outputPath} + "/output.c";
+  auto outputFile = std::string{outputPath} + ".c";
 
   std::error_code errorCode;
   llvm::raw_fd_ostream stream(outputFile, errorCode);
@@ -113,8 +113,10 @@ int compile(clang::tooling::ClangTool &tool,
   stream.flush();
   stream.close();
 
-  auto cmd = "clang-13 -c " + outputFile + " -o " + outputPath + "/output.o";
-  system(cmd.c_str());
+  auto cmd = "clang -c " + outputFile + " -o " + std::string{outputPath} + ".o";
+  if (system(cmd.c_str())) {
+    return 1;
+  };
   return 0;
 }
 
