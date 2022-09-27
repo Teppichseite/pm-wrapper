@@ -1,7 +1,3 @@
 [
-    {
-        "directory": "/home/teppichseite/development/thesis/pm-wrapper/src/compiler/test-programs",
-        "command": "clang-13 btree.c",
-        "file": "/home/teppichseite/development/thesis/pm-wrapper/src/compiler/test-programs/btree.c"
-    }
+    {}
 ]
