@@ -12,6 +12,7 @@ You can read more about persistent memory and the design of pm-wrapper in the [r
 
 ## Required dependencies
 - make
+- cmake
 - docker
 - clang-13
 
